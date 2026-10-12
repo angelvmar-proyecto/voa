@@ -1,0 +1,3 @@
+# Pega una URL por línea. Las líneas que empiezan con # se ignoran.
+# Ejemplos (reemplaza por las que quieras):
+https://learningenglish.voanews.com/a/lets-learn-english-lesson-one/3111026.html
