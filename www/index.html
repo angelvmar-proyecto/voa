@@ -3,16 +3,17 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Mi Inglés - VOA</title>
+<title>MAR Caribe - Mi Inglés VOA</title>
 <style>
   * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
   body { font-family: system-ui, sans-serif; margin: 0; padding: 0;
-         background: #f5f7fa; color: #222; padding-bottom: 80px; }
+         background: #f5f7fa; color: #222; padding-bottom: 90px; }
   header { background: #1e40af; color: #fff; padding: 14px 16px;
            position: sticky; top: 0; z-index: 10; }
-  header h1 { font-size: 20px; margin: 0; }
+  header h1 { font-size: 19px; margin: 0; }
+  header .sub { font-size: 12px; opacity: .85; margin-top: 2px; }
   .tabs { display: flex; background: #fff; border-bottom: 1px solid #e2e8f0;
-          position: sticky; top: 52px; z-index: 9; }
+          position: sticky; top: 60px; z-index: 9; }
   .tabs button { flex: 1; padding: 14px 8px; border: 0; background: transparent;
                  font-size: 15px; font-weight: 600; color: #64748b; cursor: pointer;
                  border-bottom: 3px solid transparent; }
@@ -21,12 +22,13 @@
   .contenido.activo { display: block; }
   .barra { display: flex; gap: 8px; margin-bottom: 12px; }
   .barra button { flex: 1; background: #2563eb; color: #fff; border: 0;
-                  border-radius: 10px; padding: 12px; font-size: 15px;
+                  border-radius: 10px; padding: 13px; font-size: 15px;
                   font-weight: 600; cursor: pointer; }
-  .barra button.sec { background: #64748b; }
+  .barra button.sec { flex: 0 0 56px; background: #64748b; }
   .barra button:disabled { opacity: .6; }
   .estado { background: #fef3c7; color: #78350f; padding: 10px 12px;
-            border-radius: 8px; font-size: 14px; margin-bottom: 10px; }
+            border-radius: 8px; font-size: 14px; margin-bottom: 10px;
+            word-break: break-word; }
   .estado.ok { background: #dcfce7; color: #14532d; }
   .estado.err { background: #fee2e2; color: #7f1d1d; }
   .item { background: #fff; border-radius: 12px; padding: 12px;
@@ -34,8 +36,8 @@
   .item h3 { font-size: 15px; margin: 0 0 6px; line-height: 1.3; }
   .item .meta { font-size: 12px; color: #64748b; margin-bottom: 8px; }
   .item .acciones { display: flex; gap: 8px; }
-  .item button { flex: 1; padding: 9px; border: 0; border-radius: 8px;
-                 font-size: 14px; cursor: pointer; }
+  .item button { flex: 1; padding: 10px; border: 0; border-radius: 8px;
+                 font-size: 14px; cursor: pointer; font-weight: 600; }
   .item .desc { background: #2563eb; color: #fff; }
   .item .desc.guardado { background: #16a34a; }
   .item .play { background: #e2e8f0; color: #1e293b; }
@@ -46,12 +48,18 @@
              border-radius: 50%; animation: giro .8s linear infinite;
              vertical-align: middle; margin-right: 6px; }
   @keyframes giro { to { transform: rotate(360deg); } }
+  footer { position: fixed; bottom: 0; left: 0; right: 0; background: #1e293b;
+           color: #cbd5e1; font-size: 11px; padding: 8px 12px; text-align: center;
+           line-height: 1.4; }
+  footer a { color: #93c5fd; text-decoration: none; }
+  footer .marca { color: #fbbf24; font-weight: 700; }
 </style>
 </head>
 <body>
 
 <header>
   <h1>🎧 Mi Inglés VOA</h1>
+  <div class="sub">por MAR Caribe</div>
 </header>
 
 <div class="tabs">
@@ -64,7 +72,7 @@
     <button onclick="actualizarBiblioteca('lecciones')">🔄 Actualizar biblioteca</button>
     <button class="sec" onclick="borrarBiblioteca('lecciones')">🗑️</button>
   </div>
-  <div id="estado-lecciones"></div>
+  <div id="estado-lecciones" style="display:none"></div>
   <div id="lista-lecciones"><div class="vacio">Toca "Actualizar biblioteca" para empezar</div></div>
 </div>
 
@@ -73,23 +81,31 @@
     <button onclick="actualizarBiblioteca('entrevistas')">🔄 Actualizar biblioteca</button>
     <button class="sec" onclick="borrarBiblioteca('entrevistas')">🗑️</button>
   </div>
-  <div id="estado-entrevistas"></div>
+  <div id="estado-entrevistas" style="display:none"></div>
   <div id="lista-entrevistas"><div class="vacio">Toca "Actualizar biblioteca" para empezar</div></div>
 </div>
 
-<script type="module">
-import { Filesystem, Directory, Encoding } from '@capacitor/filesystem';
+<footer>
+  Contenido educativo de <a href="https://learningenglish.voanews.com" target="_blank">VOA Learning English</a> (dominio público).<br>
+  App desarrollada por <span class="marca">MAR Caribe</span> · Cancún, México
+</footer>
 
-// ==== CONFIGURA AQUÍ TUS FEEDS RSS ====
-// Reemplaza estas URLs por los feeds que quieras usar.
-// Los feeds de VOA Learning English tienen formato:
-//   https://learningenglish.voanews.com/api/zmgqoe$mmq  (feed general)
-// Puedes encontrar más feeds en cada sección de la web.
+<script>
+// ================================================================
+// CONFIGURA AQUÍ LAS URLs DE LOS FEEDS RSS DE VOA
+// Encuéntralos en: https://learningenglish.voanews.com/podcast/
+// Toca el ícono RSS de cada programa y copia la URL aquí abajo.
+// ================================================================
 const FEEDS = {
-  lecciones: 'https://learningenglish.voanews.com/api/zmi-qeytiq',
+  lecciones:   'https://learningenglish.voanews.com/api/zmi-qeytiq',
   entrevistas: 'https://learningenglish.voanews.com/api/zmi-qeytiq'
 };
-// =====================================
+// ================================================================
+
+// Referencias a los plugins nativos de Capacitor
+const Plugins = (window.Capacitor && window.Capacitor.Plugins) || {};
+const Filesystem = Plugins.Filesystem;
+const Directory = { Data: 'DATA', Documents: 'DOCUMENTS', Cache: 'CACHE' };
 
 const tabActiva = { actual: 'lecciones' };
 
@@ -99,7 +115,7 @@ async function guardarJSON(nombre, datos) {
     path: nombre,
     data: JSON.stringify(datos),
     directory: Directory.Data,
-    encoding: Encoding.UTF8
+    encoding: 'utf8'
   });
 }
 
@@ -108,12 +124,10 @@ async function leerJSON(nombre) {
     const r = await Filesystem.readFile({
       path: nombre,
       directory: Directory.Data,
-      encoding: Encoding.UTF8
+      encoding: 'utf8'
     });
     return JSON.parse(r.data);
-  } catch (e) {
-    return null;
-  }
+  } catch (e) { return null; }
 }
 
 async function existeArchivo(nombre) {
@@ -123,9 +137,36 @@ async function existeArchivo(nombre) {
   } catch (e) { return false; }
 }
 
-function escaparXml(s) {
-  return s.replace(/<!\[CDATA\[|\]\]>/g, '').trim();
+// Convierte un ArrayBuffer a base64 en trozos (evita crash con MP3 grandes)
+function bufferToBase64(buffer) {
+  const bytes = new Uint8Array(buffer);
+  let binary = '';
+  const chunk = 0x8000;
+  for (let i = 0; i < bytes.length; i += chunk) {
+    binary += String.fromCharCode.apply(null, bytes.subarray(i, i + chunk));
+  }
+  return btoa(binary);
 }
+
+// Fetch que funciona en Capacitor (usa proxy nativo si está disponible)
+async function bajar(url, comoTexto) {
+  // CapacitorHttp: permite saltar CORS
+  if (Plugins.CapacitorHttp) {
+    const opts = { url, headers: { 'User-Agent': 'Mozilla/5.0' } };
+    if (!comoTexto) opts.responseType = 'arraybuffer';
+    const r = await Plugins.CapacitorHttp.get(opts);
+    if (r.status >= 400) throw new Error('HTTP ' + r.status);
+    if (comoTexto) return typeof r.data === 'string' ? r.data : JSON.stringify(r.data);
+    // data viene en base64 cuando responseType=arraybuffer
+    return r.data;
+  }
+  // Fallback: fetch normal
+  const res = await fetch(url);
+  if (!res.ok) throw new Error('HTTP ' + res.status);
+  return comoTexto ? await res.text() : await res.arrayBuffer();
+}
+
+function limpiar(s) { return (s || '').replace(/<!\[CDATA\[|\]\]>/g, '').trim(); }
 
 function parsearRSS(xml) {
   const items = xml.match(/<item[\s>][\s\S]*?<\/item>/g) || [];
@@ -138,15 +179,15 @@ function parsearRSS(xml) {
     const pub = it.match(/<pubDate>([\s\S]*?)<\/pubDate>/);
     if (!t || !mp3) return null;
     return {
-      titulo: escaparXml(t[1]),
-      mp3: escaparXml(mp3[1].replace(/\\\//g, '/')),
-      pagina: link ? escaparXml(link[1]) : null,
-      fecha: pub ? escaparXml(pub[1]) : ''
+      titulo: limpiar(t[1]),
+      mp3: limpiar(mp3[1].replace(/\\\//g, '/')),
+      pagina: link ? limpiar(link[1]) : null,
+      fecha: pub ? limpiar(pub[1]) : ''
     };
   }).filter(Boolean);
 }
 
-// ---------- Interfaz ----------
+// ---------- UI ----------
 window.cambiarTab = function(tab) {
   tabActiva.actual = tab;
   document.querySelectorAll('.tabs button').forEach(b => b.classList.remove('activo'));
@@ -156,12 +197,11 @@ window.cambiarTab = function(tab) {
   cargarVista(tab);
 };
 
-function setEstado(tab, msg, tipo = '') {
+function setEstado(tab, msg, tipo) {
   const el = document.getElementById('estado-' + tab);
-  el.className = 'estado ' + tipo;
-  el.innerHTML = msg;
-  if (!msg) el.style.display = 'none';
-  else el.style.display = 'block';
+  el.className = 'estado ' + (tipo || '');
+  el.innerHTML = msg || '';
+  el.style.display = msg ? 'block' : 'none';
 }
 
 function formatearFecha(s) {
@@ -169,7 +209,12 @@ function formatearFecha(s) {
   try {
     const d = new Date(s);
     return d.toLocaleDateString('es-MX', { day: 'numeric', month: 'short', year: 'numeric' });
-  } catch { return ''; }
+  } catch (e) { return ''; }
+}
+
+function escapeHtml(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+                  .replace(/"/g,'&quot;').replace(/'/g,'&#39;');
 }
 
 // ---------- Biblioteca ----------
@@ -178,19 +223,15 @@ window.actualizarBiblioteca = async function(tab) {
   boton.disabled = true;
   const textoOriginal = boton.innerHTML;
   boton.innerHTML = '<span class="spinner"></span> Descargando...';
-  setEstado(tab, '📡 Consultando el feed de VOA...');
+  setEstado(tab, '📡 Consultando el feed...');
 
   try {
-    const url = FEEDS[tab] + (FEEDS[tab].includes('?') ? '&' : '?') + '_=' + Date.now();
-    const res = await fetch(url);
-    if (!res.ok) throw new Error('HTTP ' + res.status);
-    const xml = await res.text();
-
+    const url = FEEDS[tab] + (FEEDS[tab].indexOf('?') >= 0 ? '&' : '?') + '_=' + Date.now();
+    const xml = await bajar(url, true);
     const items = parsearRSS(xml);
     if (!items.length) throw new Error('El feed no contiene episodios');
-
     await guardarJSON('biblioteca_' + tab + '.json', items);
-    setEstado(tab, '✅ ' + items.length + ' episodios encontrados', 'ok');
+    setEstado(tab, '✅ ' + items.length + ' episodios disponibles', 'ok');
     await cargarVista(tab);
   } catch (e) {
     setEstado(tab, '❌ Error: ' + e.message, 'err');
@@ -202,81 +243,56 @@ window.actualizarBiblioteca = async function(tab) {
 
 window.borrarBiblioteca = async function(tab) {
   if (!confirm('¿Borrar la biblioteca de ' + tab + '?')) return;
-  try { await Filesystem.deleteFile({ path: 'biblioteca_' + tab + '.json', directory: Directory.Data }); } catch {}
+  try { await Filesystem.deleteFile({ path: 'biblioteca_' + tab + '.json', directory: Directory.Data }); } catch (e) {}
   setEstado(tab, '');
   document.getElementById('lista-' + tab).innerHTML =
     '<div class="vacio">Biblioteca borrada. Toca "Actualizar biblioteca"</div>';
 };
 
-// ---------- Carga y render ----------
 async function cargarVista(tab) {
   const lista = document.getElementById('lista-' + tab);
   const items = await leerJSON('biblioteca_' + tab + '.json');
-
   if (!items || !items.length) {
     lista.innerHTML = '<div class="vacio">Sin episodios. Toca "Actualizar biblioteca".</div>';
     return;
   }
-
   lista.innerHTML = '';
   for (let i = 0; i < items.length; i++) {
     const it = items[i];
-    const div = document.createElement('div');
-    div.className = 'item';
-    const idAudio = 'audio_' + tab + '_' + i;
-
-    // Verificamos si el audio ya está descargado
     const nombreArchivo = 'audio_' + tab + '_' + i + '.mp3';
     const guardado = await existeArchivo(nombreArchivo);
-
-    div.innerHTML = `
-      <h3>${escapeHtml(it.titulo)}</h3>
-      <div class="meta">${formatearFecha(it.fecha)}</div>
-      <div class="acciones">
-        <button class="desc ${guardado ? 'guardado' : ''}"
-                data-tab="${tab}" data-i="${i}" data-url="${it.mp3}"
-                data-nombre="${nombreArchivo}">
-          ${guardado ? '✅ Guardado' : '⬇️ Descargar'}
-        </button>
-        <button class="play" data-tab="${tab}" data-i="${i}">▶️ Escuchar</button>
-      </div>
-      <div id="rep_${tab}_${i}"></div>
-    `;
+    const div = document.createElement('div');
+    div.className = 'item';
+    div.innerHTML =
+      '<h3>' + escapeHtml(it.titulo) + '</h3>' +
+      '<div class="meta">' + formatearFecha(it.fecha) + '</div>' +
+      '<div class="acciones">' +
+        '<button class="desc ' + (guardado ? 'guardado' : '') + '" ' +
+                'data-tab="' + tab + '" data-i="' + i + '" ' +
+                'data-url="' + escapeHtml(it.mp3) + '" ' +
+                'data-nombre="' + nombreArchivo + '">' +
+          (guardado ? '✅ Guardado' : '⬇️ Descargar') +
+        '</button>' +
+        '<button class="play" data-tab="' + tab + '" data-i="' + i + '">▶️ Escuchar</button>' +
+      '</div>' +
+      '<div id="rep_' + tab + '_' + i + '"></div>';
     lista.appendChild(div);
   }
 }
 
-function escapeHtml(s) {
-  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
-          .replace(/"/g,'&quot;').replace(/'/g,'&#39;');
-}
-
-// ---------- Descarga de audio ----------
-document.addEventListener('click', async (e) => {
+// ---------- Clicks ----------
+document.addEventListener('click', async function(e) {
   const boton = e.target.closest('button');
   if (!boton) return;
 
-  // Descargar audio
   if (boton.classList.contains('desc')) {
-    const tab = boton.dataset.tab;
-    const url = boton.dataset.url;
     const nombre = boton.dataset.nombre;
-    const textoOrig = boton.innerHTML;
+    const url = boton.dataset.url;
     boton.disabled = true;
-    boton.innerHTML = '<span class="spinner"></span>';
-
+    boton.innerHTML = '<span class="spinner" style="border-color:#fff;border-top-color:transparent"></span>';
     try {
-      const res = await fetch(url);
-      if (!res.ok) throw new Error('HTTP ' + res.status);
-      const buf = await res.arrayBuffer();
-      const base64 = btoa(String.fromCharCode(...new Uint8Array(buf)));
-
-      await Filesystem.writeFile({
-        path: nombre,
-        data: base64,
-        directory: Directory.Data
-      });
-
+      const base64 = await bajar(url, false);
+      await Filesystem.writeFile({ path: nombre, data: base64, directory: Directory.Data });
       boton.classList.add('guardado');
       boton.innerHTML = '✅ Guardado';
       boton.disabled = false;
@@ -287,7 +303,6 @@ document.addEventListener('click', async (e) => {
     }
   }
 
-  // Reproducir (desde el archivo guardado o desde URL)
   if (boton.classList.contains('play')) {
     const tab = boton.dataset.tab;
     const i = boton.dataset.i;
@@ -296,12 +311,12 @@ document.addEventListener('click', async (e) => {
 
     if (cont.innerHTML) { cont.innerHTML = ''; boton.innerHTML = '▶️ Escuchar'; return; }
 
-    boton.innerHTML = '<span class="spinner"></span>';
+    boton.disabled = true;
     try {
       let src;
       if (await existeArchivo(nombre)) {
         const r = await Filesystem.readFile({ path: nombre, directory: Directory.Data });
-        src = 'data:audio/mp3;base64,' + r.data;
+        src = 'data:audio/mpeg;base64,' + r.data;
       } else {
         const items = await leerJSON('biblioteca_' + tab + '.json');
         src = items[i].mp3;
@@ -312,6 +327,7 @@ document.addEventListener('click', async (e) => {
       boton.innerHTML = '▶️ Escuchar';
       alert('Error: ' + err.message);
     }
+    boton.disabled = false;
   }
 });
 
