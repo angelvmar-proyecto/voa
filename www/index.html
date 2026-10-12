@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mi Inglés - VOA</title>
+<style>
+  * { box-sizing: border-box; }
+  body { font-family: system-ui, sans-serif; margin: 0; padding: 12px;
+         background: #f5f7fa; color: #222; }
+  h1 { font-size: 20px; margin: 8px 0; }
+  #lista { display: grid; gap: 10px; }
+  .tarjeta { background: #fff; border-radius: 12px; padding: 12px;
+             box-shadow: 0 1px 4px rgba(0,0,0,.08); }
+  .tarjeta h2 { font-size: 16px; margin: 0 0 8px; }
+  audio { width: 100%; margin: 6px 0; }
+  button { background: #2563eb; color: #fff; border: 0; border-radius: 8px;
+           padding: 10px 14px; font-size: 15px; cursor: pointer; }
+  #texto { background: #fff; border-radius: 12px; padding: 14px;
+           margin-top: 10px; white-space: pre-wrap; line-height: 1.6;
+           font-size: 17px; max-height: 60vh; overflow-y: auto; }
+  .oculto { display: none; }
+</style>
+</head>
+<body>
+<h1>🎧 Mi Inglés</h1>
+<div id="lista">Cargando lecciones…</div>
+<div id="texto" class="oculto"></div>
+
+<script>
+const lista = document.getElementById('lista');
+const cajaTexto = document.getElementById('texto');
+let lecciones = [];
+
+fetch('lecciones.json')
+  .then(r => r.json())
+  .then(data => {
+    lecciones = data;
+    lista.innerHTML = '';
+    data.forEach((lec, i) => {
+      const div = document.createElement('div');
+      div.className = 'tarjeta';
+      div.innerHTML = `
+        <h2>${lec.titulo}</h2>
+        <audio controls preload="none" src="${lec.audio}"></audio>
+        <button data-i="${i}">📖 Ver texto</button>
+      `;
+      lista.appendChild(div);
+    });
+    lista.addEventListener('click', e => {
+      if (e.target.tagName === 'BUTTON') {
+        const lec = lecciones[e.target.dataset.i];
+        cajaTexto.textContent = lec.texto;
+        cajaTexto.classList.remove('oculto');
+        cajaTexto.scrollIntoView({behavior:'smooth'});
+      }
+    });
+  })
+  .catch(err => lista.textContent = 'Error cargando lecciones: ' + err);
+</script>
+</body>
+</html>

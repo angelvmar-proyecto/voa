@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Mi Inglés VOA</string>
+    <string name="title_activity_main">Mi Inglés VOA</string>
+    <string name="package_name">com.angelvmar.voa</string>
+    <string name="custom_url_scheme">com.angelvmar.voa</string>
+</resources>
