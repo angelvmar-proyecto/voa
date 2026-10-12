@@ -93,17 +93,16 @@
 <script>
 // ================================================================
 // FEEDS RSS DE VOA LEARNING ENGLISH
-// Si alguno no funciona, cámbialo aquí y vuelve a compilar.
 // ================================================================
-const FEEDS = {
-  lecciones:   'https://learningenglish.voanews.com/api/zmi-qeytiq',
-  entrevistas: 'https://learningenglish.voanews.com/api/zmi-qeytiq'
+var FEEDS = {
+  lecciones:   'https://learningenglish.voanews.com/podcast/?count=20&zoneId=1689',
+  entrevistas: 'https://learningenglish.voanews.com/podcast/?zoneId=1579'
 };
 // ================================================================
 
-const Plugins = (window.Capacitor && window.Capacitor.Plugins) || {};
-const Filesystem = Plugins.Filesystem;
-const Directory = {
+var Plugins = (window.Capacitor && window.Capacitor.Plugins) || {};
+var Filesystem = Plugins.Filesystem;
+var Directory = {
   Data: 'DATA',
   Documents: 'DOCUMENTS',
   Cache: 'CACHE',
@@ -111,7 +110,7 @@ const Directory = {
 };
 
 // Carpeta visible: /storage/emulated/0/Android/data/com.angelvmar.voa/files/
-const CARPETA_AUDIOS = 'audios/';
+var CARPETA_AUDIOS = 'audios/';
 
 async function guardarJSON(nombre, datos) {
   await Filesystem.writeFile({
@@ -124,7 +123,7 @@ async function guardarJSON(nombre, datos) {
 
 async function leerJSON(nombre) {
   try {
-    const r = await Filesystem.readFile({
+    var r = await Filesystem.readFile({
       path: nombre,
       directory: Directory.External,
       encoding: 'utf8'
@@ -140,28 +139,18 @@ async function existeArchivo(nombre) {
   } catch (e) { return false; }
 }
 
-function bufferToBase64(buffer) {
-  const bytes = new Uint8Array(buffer);
-  let binary = '';
-  const chunk = 0x8000;
-  for (let i = 0; i < bytes.length; i += chunk) {
-    binary += String.fromCharCode.apply(null, bytes.subarray(i, i + chunk));
-  }
-  return btoa(binary);
-}
-
 async function bajar(url, comoTexto) {
   if (Plugins.CapacitorHttp) {
-    const opts = { url: url, headers: { 'User-Agent': 'Mozilla/5.0' } };
+    var opts = { url: url, headers: { 'User-Agent': 'Mozilla/5.0' } };
     if (!comoTexto) opts.responseType = 'arraybuffer';
-    const r = await Plugins.CapacitorHttp.get(opts);
+    var r = await Plugins.CapacitorHttp.get(opts);
     if (r.status >= 400) throw new Error('HTTP ' + r.status);
     if (comoTexto) {
       return typeof r.data === 'string' ? r.data : JSON.stringify(r.data);
     }
     return r.data;
   }
-  const res = await fetch(url);
+  var res = await fetch(url);
   if (!res.ok) throw new Error('HTTP ' + res.status);
   return comoTexto ? await res.text() : await res.arrayBuffer();
 }
@@ -171,14 +160,14 @@ function limpiar(s) {
 }
 
 function parsearRSS(xml) {
-  const items = xml.match(/<item[\s>][\s\S]*?<\/item>/g) || [];
+  var items = xml.match(/<item[\s>][\s\S]*?<\/item>/g) || [];
   return items.map(function(it) {
-    const t = it.match(/<title>([\s\S]*?)<\/title>/);
-    const mp3 = it.match(/<enclosure[^>]+url=["']([^"']+\.mp3)["']/i) ||
-                it.match(/<media:content[^>]+url=["']([^"']+\.mp3)["']/i) ||
-                it.match(/(https?:\/\/[^\s"'<>\\]+\.mp3)/i);
-    const link = it.match(/<link>([\s\S]*?)<\/link>/);
-    const pub = it.match(/<pubDate>([\s\S]*?)<\/pubDate>/);
+    var t = it.match(/<title>([\s\S]*?)<\/title>/);
+    var mp3 = it.match(/<enclosure[^>]+url=["']([^"']+\.mp3)["']/i) ||
+              it.match(/<media:content[^>]+url=["']([^"']+\.mp3)["']/i) ||
+              it.match(/(https?:\/\/[^\s"'<>\\]+\.mp3)/i);
+    var link = it.match(/<link>([\s\S]*?)<\/link>/);
+    var pub = it.match(/<pubDate>([\s\S]*?)<\/pubDate>/);
     if (!t || !mp3) return null;
     return {
       titulo: limpiar(t[1]),
@@ -198,7 +187,7 @@ window.cambiarTab = function(tab) {
 };
 
 function setEstado(tab, msg, tipo) {
-  const el = document.getElementById('estado-' + tab);
+  var el = document.getElementById('estado-' + tab);
   el.className = 'estado ' + (tipo || '');
   el.innerHTML = msg || '';
   el.style.display = msg ? 'block' : 'none';
@@ -207,7 +196,7 @@ function setEstado(tab, msg, tipo) {
 function formatearFecha(s) {
   if (!s) return '';
   try {
-    const d = new Date(s);
+    var d = new Date(s);
     return d.toLocaleDateString('es-MX', { day: 'numeric', month: 'short', year: 'numeric' });
   } catch (e) { return ''; }
 }
@@ -218,17 +207,17 @@ function escapeHtml(s) {
 }
 
 window.actualizarBiblioteca = async function(tab) {
-  const boton = document.querySelector('#contenido-' + tab + ' .barra button');
+  var boton = document.querySelector('#contenido-' + tab + ' .barra button');
   boton.disabled = true;
-  const textoOriginal = boton.innerHTML;
+  var textoOriginal = boton.innerHTML;
   boton.innerHTML = '<span class="spinner"></span> Descargando...';
   setEstado(tab, '📡 Consultando el feed...');
 
   try {
-    const sep = FEEDS[tab].indexOf('?') >= 0 ? '&' : '?';
-    const url = FEEDS[tab] + sep + '_=' + Date.now();
-    const xml = await bajar(url, true);
-    const items = parsearRSS(xml);
+    var sep = FEEDS[tab].indexOf('?') >= 0 ? '&' : '?';
+    var url = FEEDS[tab] + sep + '_=' + Date.now();
+    var xml = await bajar(url, true);
+    var items = parsearRSS(xml);
     if (!items.length) throw new Error('El feed no contiene episodios');
     await guardarJSON('biblioteca_' + tab + '.json', items);
     setEstado(tab, '✅ ' + items.length + ' episodios disponibles', 'ok');
@@ -255,19 +244,19 @@ window.borrarBiblioteca = async function(tab) {
 };
 
 async function cargarVista(tab) {
-  const lista = document.getElementById('lista-' + tab);
-  const items = await leerJSON('biblioteca_' + tab + '.json');
+  var lista = document.getElementById('lista-' + tab);
+  var items = await leerJSON('biblioteca_' + tab + '.json');
   if (!items || !items.length) {
     lista.innerHTML = '<div class="vacio">Sin episodios. Toca "Actualizar biblioteca".</div>';
     return;
   }
   lista.innerHTML = '';
-  for (let i = 0; i < items.length; i++) {
-    const it = items[i];
-    const nombreArchivo = 'l' + i + '.mp3';
-    const rutaArchivo = CARPETA_AUDIOS + nombreArchivo;
-    const guardado = await existeArchivo(rutaArchivo);
-    const div = document.createElement('div');
+  for (var i = 0; i < items.length; i++) {
+    var it = items[i];
+    var nombreArchivo = 'l' + i + '.mp3';
+    var rutaArchivo = CARPETA_AUDIOS + nombreArchivo;
+    var guardado = await existeArchivo(rutaArchivo);
+    var div = document.createElement('div');
     div.className = 'item';
     div.innerHTML =
       '<h3>' + escapeHtml(it.titulo) + '</h3>' +
@@ -287,16 +276,16 @@ async function cargarVista(tab) {
 }
 
 document.addEventListener('click', async function(e) {
-  const boton = e.target.closest('button');
+  var boton = e.target.closest('button');
   if (!boton) return;
 
   if (boton.classList.contains('desc')) {
-    const nombre = boton.dataset.nombre;
-    const url = boton.dataset.url;
+    var nombre = boton.dataset.nombre;
+    var url = boton.dataset.url;
     boton.disabled = true;
     boton.innerHTML = '<span class="spinner"></span>';
     try {
-      const base64 = await bajar(url, false);
+      var base64 = await bajar(url, false);
       await Filesystem.writeFile({
         path: nombre,
         data: base64,
@@ -313,10 +302,10 @@ document.addEventListener('click', async function(e) {
   }
 
   if (boton.classList.contains('play')) {
-    const tab = boton.dataset.tab;
-    const i = boton.dataset.i;
-    const cont = document.getElementById('rep_' + tab + '_' + i);
-    const rutaArchivo = CARPETA_AUDIOS + 'l' + i + '.mp3';
+    var tab = boton.dataset.tab;
+    var i = boton.dataset.i;
+    var cont = document.getElementById('rep_' + tab + '_' + i);
+    var rutaArchivo = CARPETA_AUDIOS + 'l' + i + '.mp3';
 
     if (cont.innerHTML) {
       cont.innerHTML = '';
@@ -326,15 +315,15 @@ document.addEventListener('click', async function(e) {
 
     boton.disabled = true;
     try {
-      let src;
+      var src;
       if (await existeArchivo(rutaArchivo)) {
-        const r = await Filesystem.readFile({
+        var r = await Filesystem.readFile({
           path: rutaArchivo,
           directory: Directory.External
         });
         src = 'data:audio/mpeg;base64,' + r.data;
       } else {
-        const items = await leerJSON('biblioteca_' + tab + '.json');
+        var items = await leerJSON('biblioteca_' + tab + '.json');
         src = items[i].mp3;
       }
       cont.innerHTML = '<audio controls autoplay src="' + src + '"></audio>';
