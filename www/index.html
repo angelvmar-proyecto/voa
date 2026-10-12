@@ -68,17 +68,17 @@
 </header>
 
 <div class="tabs">
-  <button id="tab-lecciones" class="activo" onclick="cambiarTab('lecciones')">📚 Lecciones</button>
+  <button id="tab-lecciones" class="activo" onclick="cambiarTab('lecciones')">📚 Let's Learn English</button>
   <button id="tab-entrevistas" onclick="cambiarTab('entrevistas')">🎤 Entrevistas</button>
 </div>
 
 <div id="contenido-lecciones" class="contenido activo">
   <div class="barra">
-    <button onclick="actualizarBiblioteca('lecciones')">🔄 Actualizar biblioteca</button>
+    <button onclick="actualizarBiblioteca('lecciones')">🔄 Cargar lista de lecciones</button>
     <button class="sec" onclick="borrarBiblioteca('lecciones')">🗑️</button>
   </div>
   <div id="estado-lecciones" style="display:none"></div>
-  <div id="lista-lecciones"><div class="vacio">Toca "Actualizar biblioteca" para empezar</div></div>
+  <div id="lista-lecciones"><div class="vacio">Toca "Cargar lista de lecciones" para empezar</div></div>
 </div>
 
 <div id="contenido-entrevistas" class="contenido">
@@ -97,13 +97,10 @@
 
 <script>
 // ================================================================
-// FEEDS RSS DE VOA LEARNING ENGLISH
-// Cambia estas URLs si quieres otras secciones.
+// CONFIGURACIÓN
 // ================================================================
-var FEEDS = {
-  lecciones:   'https://learningenglish.voanews.com/podcast/?count=20&zoneId=1689',
-  entrevistas: 'https://learningenglish.voanews.com/podcast/?zoneId=1579'
-};
+var PAGINA_INDICE_LECCIONES = 'https://learningenglish.voanews.com/p/5644.html';
+var FEED_ENTREVISTAS = 'https://learningenglish.voanews.com/podcast/?zoneId=1579';
 // ================================================================
 
 var Plugins = (window.Capacitor && window.Capacitor.Plugins) || {};
@@ -118,7 +115,6 @@ var Directory = {
 var CARPETA_AUDIOS = 'audios/';
 var CARPETA_TEXTOS = 'textos/';
 
-// ---------- Archivos ----------
 async function guardarJSON(nombre, datos) {
   await Filesystem.writeFile({
     path: nombre, data: JSON.stringify(datos),
@@ -151,7 +147,6 @@ async function existeArchivo(nombre) {
   } catch (e) { return false; }
 }
 
-// ---------- Descarga ----------
 async function bajar(url, comoTexto) {
   if (Plugins.CapacitorHttp) {
     var opts = { url: url, headers: { 'User-Agent': 'Mozilla/5.0' } };
@@ -173,7 +168,6 @@ function extraerTexto(html) {
   try {
     var doc = new DOMParser().parseFromString(html, 'text/html');
 
-    // Probar selectores comunes de VOA
     var art = doc.querySelector('.wsw') ||
               doc.querySelector('#article-content') ||
               doc.querySelector('.article-content') ||
@@ -182,7 +176,6 @@ function extraerTexto(html) {
 
     var texto = art ? art.innerText : doc.body.innerText;
 
-    // Limpieza
     texto = texto
       .replace(/\r/g, '')
       .split('\n')
@@ -209,7 +202,6 @@ function extraerTexto(html) {
 
     texto = texto.replace(/\n{3,}/g, '\n\n').trim();
 
-    // Cortar todo después de "Related" / "Follow Us"
     var cortes = [/\nRelated\s*\n/i, /\nFollow Us\s*\n/i, /\nAbout Learning English\s*\n/i];
     for (var i = 0; i < cortes.length; i++) {
       var m = texto.search(cortes[i]);
@@ -222,7 +214,53 @@ function extraerTexto(html) {
   }
 }
 
-// ---------- RSS ----------
+// ---------- EXTRAER LECCIONES DE LA PÁGINA ÍNDICE ----------
+function extraerLeccionesDeIndice(html) {
+  var doc = new DOMParser().parseFromString(html, 'text/html');
+  var lecciones = [];
+  var vistos = {};
+
+  // Buscar todos los enlaces que apunten a lecciones
+  var enlaces = doc.querySelectorAll('a');
+  for (var i = 0; i < enlaces.length; i++) {
+    var a = enlaces[i];
+    var href = a.getAttribute('href') || '';
+    var texto = a.innerText.trim();
+
+    // Filtrar solo enlaces a lecciones (contienen "/a/" y "lesson")
+    if (href.indexOf('/a/') === -1) continue;
+    if (!/(lesson|let.s learn english)/i.test(texto)) continue;
+    if (!/(\d+)/.test(texto)) continue;
+
+    // Normalizar URL
+    if (href.indexOf('http') !== 0) {
+      href = 'https://learningenglish.voanews.com' + (href.indexOf('/') === 0 ? '' : '/') + href;
+    }
+
+    // Evitar duplicados
+    if (vistos[href]) continue;
+    vistos[href] = true;
+
+    // Extraer número de lección del texto
+    var numMatch = texto.match(/(\d+)/);
+    var num = numMatch ? parseInt(numMatch[1], 10) : 999;
+
+    lecciones.push({
+      titulo: texto,
+      pagina: href,
+      mp3: null, // Se extraerá al visitar la página
+      fecha: '',
+      numero: num
+    });
+  }
+
+  // Ordenar por número de lección
+  lecciones.sort(function(a, b) { return a.numero - b.numero; });
+
+  return lecciones;
+}
+
+// ---------- RSS (para entrevistas) ----------
 function limpiar(s) { return (s || '').replace(/<!\[CDATA\[|\]\]>/g, '').trim(); }
 
 function parsearRSS(xml) {
@@ -273,22 +311,33 @@ function escapeHtml(s) {
                   .replace(/"/g,'&quot;').replace(/'/g,'&#39;');
 }
 
-// ---------- Biblioteca ----------
+// ---------- BIBLIOTECA ----------
 window.actualizarBiblioteca = async function(tab) {
   var boton = document.querySelector('#contenido-' + tab + ' .barra button');
   boton.disabled = true;
   var textoOriginal = boton.innerHTML;
-  boton.innerHTML = '<span class="spinner"></span> Descargando...';
-  setEstado(tab, '📡 Consultando el feed...');
+  boton.innerHTML = '<span class="spinner"></span> Cargando...';
+  setEstado(tab, '📡 Descargando lista...');
 
   try {
-    var sep = FEEDS[tab].indexOf('?') >= 0 ? '&' : '?';
-    var url = FEEDS[tab] + sep + '_=' + Date.now();
-    var xml = await bajar(url, true);
-    var items = parsearRSS(xml);
-    if (!items.length) throw new Error('El feed no contiene episodios');
+    var items;
+
+    if (tab === 'lecciones') {
+      // Estrategia especial: usar página índice
+      var html = await bajar(PAGINA_INDICE_LECCIONES, true);
+      items = extraerLeccionesDeIndice(html);
+      if (!items.length) throw new Error('No se encontraron lecciones en la página índice');
+    } else {
+      // Estrategia RSS para entrevistas
+      var sep = FEED_ENTREVISTAS.indexOf('?') >= 0 ? '&' : '?';
+      var url = FEED_ENTREVISTAS + sep + '_=' + Date.now();
+      var xml = await bajar(url, true);
+      items = parsearRSS(xml);
+      if (!items.length) throw new Error('El feed no contiene episodios');
+    }
+
     await guardarJSON('biblioteca_' + tab + '.json', items);
-    setEstado(tab, '✅ ' + items.length + ' episodios disponibles', 'ok');
+    setEstado(tab, '✅ ' + items.length + ' elementos cargados', 'ok');
     await cargarVista(tab);
   } catch (e) {
     setEstado(tab, '❌ Error: ' + e.message, 'err');
@@ -308,14 +357,14 @@ window.borrarBiblioteca = async function(tab) {
   } catch (e) {}
   setEstado(tab, '');
   document.getElementById('lista-' + tab).innerHTML =
-    '<div class="vacio">Biblioteca borrada. Toca "Actualizar biblioteca"</div>';
+    '<div class="vacio">Biblioteca borrada. Toca "Cargar lista".</div>';
 };
 
 async function cargarVista(tab) {
   var lista = document.getElementById('lista-' + tab);
   var items = await leerJSON('biblioteca_' + tab + '.json');
   if (!items || !items.length) {
-    lista.innerHTML = '<div class="vacio">Sin episodios. Toca "Actualizar biblioteca".</div>';
+    lista.innerHTML = '<div class="vacio">Sin elementos. Toca el botón de arriba.</div>';
     return;
   }
   lista.innerHTML = '';
@@ -330,11 +379,11 @@ async function cargarVista(tab) {
     div.className = 'item';
     div.innerHTML =
       '<h3>' + escapeHtml(it.titulo) + '</h3>' +
-      '<div class="meta">' + formatearFecha(it.fecha) + '</div>' +
+      '<div class="meta">' + (it.fecha ? formatearFecha(it.fecha) : '') + '</div>' +
       '<div class="acciones">' +
         '<button class="desc ' + (guardado ? 'guardado' : '') + '" ' +
                 'data-tab="' + tab + '" data-i="' + i + '" ' +
-                'data-mp3="' + escapeHtml(it.mp3) + '" ' +
+                'data-mp3="' + escapeHtml(it.mp3 || '') + '" ' +
                 'data-pagina="' + escapeHtml(it.pagina || '') + '" ' +
                 'data-ruta-audio="' + rutaAudio + '" ' +
                 'data-ruta-texto="' + rutaTexto + '">' +
@@ -354,7 +403,7 @@ async function cargarVista(tab) {
   }
 }
 
-// ---------- Clicks ----------
+// ---------- CLICKS ----------
 document.addEventListener('click', async function(e) {
   var boton = e.target.closest('button');
   if (!boton) return;
@@ -369,13 +418,25 @@ document.addEventListener('click', async function(e) {
     boton.innerHTML = '<span class="spinner"></span> Bajando...';
 
     try {
-      // 1) Bajar MP3
+      // 1) Si no tenemos URL del MP3, extraerla de la página de la lección
+      if (!mp3Url && pagina) {
+        boton.innerHTML = '<span class="spinner"></span> Buscando audio...';
+        var htmlLeccion = await bajar(pagina, true);
+        var mp3Match = htmlLeccion.match(/<audio[^>]+src=["']([^"']+\.mp3[^"']*)["']/i) ||
+                       htmlLeccion.match(/<source[^>]+src=["']([^"']+\.mp3[^"']*)["']/i) ||
+                       htmlLeccion.match(/href=["']([^"']+\.mp3[^"']*)["']/i) ||
+                       htmlLeccion.match(/(https?:\/\/[^\s"'<>\\]+\.mp3)/i);
+        if (!mp3Match) throw new Error('No se encontró el MP3 en la página');
+        mp3Url = mp3Match[1].replace(/\\\//g, '/');
+      }
+
+      // 2) Bajar MP3
       var base64 = await bajar(mp3Url, false);
       await Filesystem.writeFile({
         path: rutaAudio, data: base64, directory: Directory.External
       });
 
-      // 2) Bajar texto de la página de la lección
+      // 3) Bajar texto de la página de la lección
       if (pagina) {
         try {
           boton.innerHTML = '<span class="spinner"></span> Texto...';
@@ -453,7 +514,6 @@ document.addEventListener('click', async function(e) {
     boton.disabled = true;
     var texto = await leerTexto(rutaT);
 
-    // Si no está descargado, bajarlo ahora
     if (!texto && paginaT) {
       boton.innerHTML = '<span class="spinner"></span> Bajando...';
       try {
