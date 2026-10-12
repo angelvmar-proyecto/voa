@@ -90,11 +90,17 @@ function slugify(s) {
 }
 
 async function procesar(url, lecciones, idx) {
+  // 1. Transformar a URL AMP
+  const urlAmp = url.replace('learningenglish.voanews.com/a/', 'learningenglish.voanews.com/amp/');
   console.log(`\n📥 [${idx}] ${url}`);
-  const html = await fetchText(url);
+  console.log(`   Usando AMP: ${urlAmp}`);
+
+  const html = await fetchText(urlAmp); // Usamos la URL AMP
   const titulo = extractTitle(html);
   const mp3Url = extractMp3(html);
-  const texto = extractArticle(html);
+  
+  // 2. Extracción de texto mejorada para AMP (más simple y directa)
+  const texto = cleanHtml(html.replace(/[\s\S]*<body[^>]*>/, '').replace(/<\/body>[\s\S]*/, ''));
 
   console.log(`   Título: ${titulo}`);
 
