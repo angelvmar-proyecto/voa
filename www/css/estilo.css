@@ -1,0 +1,56 @@
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+body { font-family: system-ui, sans-serif; margin: 0; padding: 0;
+       background: #f5f7fa; color: #222; padding-bottom: 90px; }
+header { background: #1e40af; color: #fff; padding: 14px 16px;
+         position: sticky; top: 0; z-index: 10; }
+header h1 { font-size: 19px; margin: 0; }
+header .sub { font-size: 12px; opacity: .85; margin-top: 2px; }
+.tabs { display: flex; background: #fff; border-bottom: 1px solid #e2e8f0;
+        position: sticky; top: 60px; z-index: 9; overflow-x: auto; }
+.tabs button { flex: 1 0 auto; padding: 14px 10px; border: 0; background: transparent;
+               font-size: 14px; font-weight: 600; color: #64748b; cursor: pointer;
+               border-bottom: 3px solid transparent; white-space: nowrap; }
+.tabs button.activo { color: #1e40af; border-bottom-color: #1e40af; }
+.contenido { display: none; padding: 12px; }
+.contenido.activo { display: block; }
+.barra { display: flex; gap: 8px; margin-bottom: 12px; }
+.barra button { flex: 1; background: #2563eb; color: #fff; border: 0;
+                border-radius: 10px; padding: 13px; font-size: 15px;
+                font-weight: 600; cursor: pointer; }
+.barra button.sec { flex: 0 0 56px; background: #64748b; }
+.barra button:disabled { opacity: .6; }
+.estado { background: #fef3c7; color: #78350f; padding: 10px 12px;
+          border-radius: 8px; font-size: 14px; margin-bottom: 10px;
+          word-break: break-word; }
+.estado.ok { background: #dcfce7; color: #14532d; }
+.estado.err { background: #fee2e2; color: #7f1d1d; }
+.ruta { background: #e0e7ff; color: #3730a3; padding: 10px 12px;
+        border-radius: 8px; font-size: 12px; margin-bottom: 10px;
+        font-family: monospace; word-break: break-all; }
+.item { background: #fff; border-radius: 12px; padding: 12px;
+        margin-bottom: 10px; box-shadow: 0 1px 4px rgba(0,0,0,.06); }
+.item h3 { font-size: 15px; margin: 0 0 6px; line-height: 1.3; }
+.item .meta { font-size: 12px; color: #64748b; margin-bottom: 8px; }
+.item .acciones { display: flex; gap: 6px; }
+.item button { flex: 1; padding: 10px 6px; border: 0; border-radius: 8px;
+               font-size: 13px; cursor: pointer; font-weight: 600; }
+.item .desc { background: #2563eb; color: #fff; }
+.item .desc.guardado { background: #16a34a; }
+.item .play { background: #e2e8f0; color: #1e293b; }
+.item .texto { background: #f59e0b; color: #fff; }
+.item audio { width: 100%; margin-top: 8px; }
+.texto-box { background: #fffbeb; border: 1px solid #fcd34d;
+             border-radius: 8px; padding: 12px; margin-top: 8px;
+             white-space: pre-wrap; line-height: 1.6; font-size: 15px;
+             max-height: 400px; overflow-y: auto; }
+.vacio { text-align: center; color: #94a3b8; padding: 40px 16px; font-size: 15px; }
+.spinner { display: inline-block; width: 12px; height: 12px;
+           border: 2px solid #fff; border-top-color: transparent;
+           border-radius: 50%; animation: giro .8s linear infinite;
+           vertical-align: middle; margin-right: 4px; }
+@keyframes giro { to { transform: rotate(360deg); } }
+footer { position: fixed; bottom: 0; left: 0; right: 0; background: #1e293b;
+         color: #cbd5e1; font-size: 11px; padding: 8px 12px; text-align: center;
+         line-height: 1.4; }
+footer a { color: #93c5fd; text-decoration: none; }
+footer .marca { color: #fbbf24; font-weight: 700; }
