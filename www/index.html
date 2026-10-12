@@ -292,7 +292,16 @@ function formatearFecha(s) {
 function escapeHtml(s) {
   return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
                   .replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+
 }
+
+function slugify(s) {
+  return String(s).toLowerCase()
+    .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z0-9]+/g, '_')
+    .replace(/^_+|_+$/g, '')
+    .slice(0, 60) || 'audio';
+
 
 // =================================================================
 // ============ LECCIONES y ENTREVISTAS (VOA) =====================
@@ -350,8 +359,9 @@ async function cargarVista(tab) {
   lista.innerHTML = '';
   for (var i = 0; i < items.length; i++) {
     var it = items[i];
-    var rutaAudio = CARPETA_AUDIOS + 'l' + i + '.mp3';
-    var rutaTexto = CARPETA_TEXTOS + 'l' + i + '.txt';
+    var slug = slugify(it.titulo);
+    var rutaAudio = CARPETA_AUDIOS + tab + '_' + slug + '.mp3';
+    var rutaTexto = CARPETA_TEXTOS + tab + '_' + slug + '.txt';
     var guardado = await existeArchivo(rutaAudio);
     var tieneTexto = await existeArchivo(rutaTexto);
 
@@ -551,7 +561,9 @@ document.addEventListener('click', async function(e) {
     var tabA = boton.dataset.tab;
     var iA = boton.dataset.i;
     var cont = document.getElementById('rep_' + tabA + '_' + iA);
-    var rutaArchivo = CARPETA_AUDIOS + 'l' + iA + '.mp3';
+    var itemsPlay = await leerJSON('biblioteca_' + tabA + '.json');
+    var slugPlay = slugify(itemsPlay[iA].titulo);
+    var rutaArchivo = CARPETA_AUDIOS + tabA + '_' + slugPlay + '.mp3';
     if (cont.innerHTML) { cont.innerHTML = ''; boton.innerHTML = '▶️ Audio'; return; }
     boton.disabled = true;
     try {
@@ -579,6 +591,10 @@ document.addEventListener('click', async function(e) {
     var contT = document.getElementById('txt_' + tabT + '_' + iT);
     var rutaT = boton.dataset.rutaTexto;
     var paginaT = boton.dataset.pagina;
+    if (rutaT && rutaT.indexOf('__SLUG__') >= 0) {
+      var itT = await leerJSON('biblioteca_' + tabT + '.json');
+      rutaT = rutaT.replace('__SLUG__', slugify(itT[iT].titulo));
+    }
     if (contT.innerHTML) { contT.innerHTML = ''; return; }
     boton.disabled = true;
     var texto = await leerTexto(rutaT);
