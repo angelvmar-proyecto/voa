@@ -1,5 +1,13 @@
 {
   "appId": "com.angelvmar.voa",
   "appName": "Mi Inglés VOA",
-  "webDir": "www"
+  "webDir": "www",
+  "server": {
+    "androidScheme": "https"
+  },
+  "plugins": {
+    "CapacitorHttp": {
+      "enabled": true
+    }
+  }
 }

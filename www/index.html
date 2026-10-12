@@ -5,58 +5,319 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Mi Inglés - VOA</title>
 <style>
-  * { box-sizing: border-box; }
-  body { font-family: system-ui, sans-serif; margin: 0; padding: 12px;
-         background: #f5f7fa; color: #222; }
-  h1 { font-size: 20px; margin: 8px 0; }
-  #lista { display: grid; gap: 10px; }
-  .tarjeta { background: #fff; border-radius: 12px; padding: 12px;
-             box-shadow: 0 1px 4px rgba(0,0,0,.08); }
-  .tarjeta h2 { font-size: 16px; margin: 0 0 8px; }
-  audio { width: 100%; margin: 6px 0; }
-  button { background: #2563eb; color: #fff; border: 0; border-radius: 8px;
-           padding: 10px 14px; font-size: 15px; cursor: pointer; }
-  #texto { background: #fff; border-radius: 12px; padding: 14px;
-           margin-top: 10px; white-space: pre-wrap; line-height: 1.6;
-           font-size: 17px; max-height: 60vh; overflow-y: auto; }
-  .oculto { display: none; }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  body { font-family: system-ui, sans-serif; margin: 0; padding: 0;
+         background: #f5f7fa; color: #222; padding-bottom: 80px; }
+  header { background: #1e40af; color: #fff; padding: 14px 16px;
+           position: sticky; top: 0; z-index: 10; }
+  header h1 { font-size: 20px; margin: 0; }
+  .tabs { display: flex; background: #fff; border-bottom: 1px solid #e2e8f0;
+          position: sticky; top: 52px; z-index: 9; }
+  .tabs button { flex: 1; padding: 14px 8px; border: 0; background: transparent;
+                 font-size: 15px; font-weight: 600; color: #64748b; cursor: pointer;
+                 border-bottom: 3px solid transparent; }
+  .tabs button.activo { color: #1e40af; border-bottom-color: #1e40af; }
+  .contenido { display: none; padding: 12px; }
+  .contenido.activo { display: block; }
+  .barra { display: flex; gap: 8px; margin-bottom: 12px; }
+  .barra button { flex: 1; background: #2563eb; color: #fff; border: 0;
+                  border-radius: 10px; padding: 12px; font-size: 15px;
+                  font-weight: 600; cursor: pointer; }
+  .barra button.sec { background: #64748b; }
+  .barra button:disabled { opacity: .6; }
+  .estado { background: #fef3c7; color: #78350f; padding: 10px 12px;
+            border-radius: 8px; font-size: 14px; margin-bottom: 10px; }
+  .estado.ok { background: #dcfce7; color: #14532d; }
+  .estado.err { background: #fee2e2; color: #7f1d1d; }
+  .item { background: #fff; border-radius: 12px; padding: 12px;
+          margin-bottom: 10px; box-shadow: 0 1px 4px rgba(0,0,0,.06); }
+  .item h3 { font-size: 15px; margin: 0 0 6px; line-height: 1.3; }
+  .item .meta { font-size: 12px; color: #64748b; margin-bottom: 8px; }
+  .item .acciones { display: flex; gap: 8px; }
+  .item button { flex: 1; padding: 9px; border: 0; border-radius: 8px;
+                 font-size: 14px; cursor: pointer; }
+  .item .desc { background: #2563eb; color: #fff; }
+  .item .desc.guardado { background: #16a34a; }
+  .item .play { background: #e2e8f0; color: #1e293b; }
+  .item audio { width: 100%; margin-top: 8px; }
+  .vacio { text-align: center; color: #94a3b8; padding: 40px 16px; font-size: 15px; }
+  .spinner { display: inline-block; width: 14px; height: 14px;
+             border: 2px solid #fff; border-top-color: transparent;
+             border-radius: 50%; animation: giro .8s linear infinite;
+             vertical-align: middle; margin-right: 6px; }
+  @keyframes giro { to { transform: rotate(360deg); } }
 </style>
 </head>
 <body>
-<h1>🎧 Mi Inglés</h1>
-<div id="lista">Cargando lecciones…</div>
-<div id="texto" class="oculto"></div>
 
-<script>
-const lista = document.getElementById('lista');
-const cajaTexto = document.getElementById('texto');
-let lecciones = [];
+<header>
+  <h1>🎧 Mi Inglés VOA</h1>
+</header>
 
-fetch('lecciones.json')
-  .then(r => r.json())
-  .then(data => {
-    lecciones = data;
-    lista.innerHTML = '';
-    data.forEach((lec, i) => {
-      const div = document.createElement('div');
-      div.className = 'tarjeta';
-      div.innerHTML = `
-        <h2>${lec.titulo}</h2>
-        <audio controls preload="none" src="${lec.audio}"></audio>
-        <button data-i="${i}">📖 Ver texto</button>
-      `;
-      lista.appendChild(div);
+<div class="tabs">
+  <button id="tab-lecciones" class="activo" onclick="cambiarTab('lecciones')">📚 Lecciones</button>
+  <button id="tab-entrevistas" onclick="cambiarTab('entrevistas')">🎤 Entrevistas</button>
+</div>
+
+<div id="contenido-lecciones" class="contenido activo">
+  <div class="barra">
+    <button onclick="actualizarBiblioteca('lecciones')">🔄 Actualizar biblioteca</button>
+    <button class="sec" onclick="borrarBiblioteca('lecciones')">🗑️</button>
+  </div>
+  <div id="estado-lecciones"></div>
+  <div id="lista-lecciones"><div class="vacio">Toca "Actualizar biblioteca" para empezar</div></div>
+</div>
+
+<div id="contenido-entrevistas" class="contenido">
+  <div class="barra">
+    <button onclick="actualizarBiblioteca('entrevistas')">🔄 Actualizar biblioteca</button>
+    <button class="sec" onclick="borrarBiblioteca('entrevistas')">🗑️</button>
+  </div>
+  <div id="estado-entrevistas"></div>
+  <div id="lista-entrevistas"><div class="vacio">Toca "Actualizar biblioteca" para empezar</div></div>
+</div>
+
+<script type="module">
+import { Filesystem, Directory, Encoding } from '@capacitor/filesystem';
+
+// ==== CONFIGURA AQUÍ TUS FEEDS RSS ====
+// Reemplaza estas URLs por los feeds que quieras usar.
+// Los feeds de VOA Learning English tienen formato:
+//   https://learningenglish.voanews.com/api/zmgqoe$mmq  (feed general)
+// Puedes encontrar más feeds en cada sección de la web.
+const FEEDS = {
+  lecciones: 'https://learningenglish.voanews.com/api/zmi-qeytiq',
+  entrevistas: 'https://learningenglish.voanews.com/api/zmi-qeytiq'
+};
+// =====================================
+
+const tabActiva = { actual: 'lecciones' };
+
+// ---------- Utilidades ----------
+async function guardarJSON(nombre, datos) {
+  await Filesystem.writeFile({
+    path: nombre,
+    data: JSON.stringify(datos),
+    directory: Directory.Data,
+    encoding: Encoding.UTF8
+  });
+}
+
+async function leerJSON(nombre) {
+  try {
+    const r = await Filesystem.readFile({
+      path: nombre,
+      directory: Directory.Data,
+      encoding: Encoding.UTF8
     });
-    lista.addEventListener('click', e => {
-      if (e.target.tagName === 'BUTTON') {
-        const lec = lecciones[e.target.dataset.i];
-        cajaTexto.textContent = lec.texto;
-        cajaTexto.classList.remove('oculto');
-        cajaTexto.scrollIntoView({behavior:'smooth'});
+    return JSON.parse(r.data);
+  } catch (e) {
+    return null;
+  }
+}
+
+async function existeArchivo(nombre) {
+  try {
+    await Filesystem.stat({ path: nombre, directory: Directory.Data });
+    return true;
+  } catch (e) { return false; }
+}
+
+function escaparXml(s) {
+  return s.replace(/<!\[CDATA\[|\]\]>/g, '').trim();
+}
+
+function parsearRSS(xml) {
+  const items = xml.match(/<item[\s>][\s\S]*?<\/item>/g) || [];
+  return items.map(it => {
+    const t = it.match(/<title>([\s\S]*?)<\/title>/);
+    const mp3 = it.match(/<enclosure[^>]+url=["']([^"']+\.mp3)["']/i) ||
+                it.match(/<media:content[^>]+url=["']([^"']+\.mp3)["']/i) ||
+                it.match(/(https?:\/\/[^\s"'<>\\]+\.mp3)/i);
+    const link = it.match(/<link>([\s\S]*?)<\/link>/);
+    const pub = it.match(/<pubDate>([\s\S]*?)<\/pubDate>/);
+    if (!t || !mp3) return null;
+    return {
+      titulo: escaparXml(t[1]),
+      mp3: escaparXml(mp3[1].replace(/\\\//g, '/')),
+      pagina: link ? escaparXml(link[1]) : null,
+      fecha: pub ? escaparXml(pub[1]) : ''
+    };
+  }).filter(Boolean);
+}
+
+// ---------- Interfaz ----------
+window.cambiarTab = function(tab) {
+  tabActiva.actual = tab;
+  document.querySelectorAll('.tabs button').forEach(b => b.classList.remove('activo'));
+  document.querySelectorAll('.contenido').forEach(c => c.classList.remove('activo'));
+  document.getElementById('tab-' + tab).classList.add('activo');
+  document.getElementById('contenido-' + tab).classList.add('activo');
+  cargarVista(tab);
+};
+
+function setEstado(tab, msg, tipo = '') {
+  const el = document.getElementById('estado-' + tab);
+  el.className = 'estado ' + tipo;
+  el.innerHTML = msg;
+  if (!msg) el.style.display = 'none';
+  else el.style.display = 'block';
+}
+
+function formatearFecha(s) {
+  if (!s) return '';
+  try {
+    const d = new Date(s);
+    return d.toLocaleDateString('es-MX', { day: 'numeric', month: 'short', year: 'numeric' });
+  } catch { return ''; }
+}
+
+// ---------- Biblioteca ----------
+window.actualizarBiblioteca = async function(tab) {
+  const boton = document.querySelector('#contenido-' + tab + ' .barra button');
+  boton.disabled = true;
+  const textoOriginal = boton.innerHTML;
+  boton.innerHTML = '<span class="spinner"></span> Descargando...';
+  setEstado(tab, '📡 Consultando el feed de VOA...');
+
+  try {
+    const url = FEEDS[tab] + (FEEDS[tab].includes('?') ? '&' : '?') + '_=' + Date.now();
+    const res = await fetch(url);
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const xml = await res.text();
+
+    const items = parsearRSS(xml);
+    if (!items.length) throw new Error('El feed no contiene episodios');
+
+    await guardarJSON('biblioteca_' + tab + '.json', items);
+    setEstado(tab, '✅ ' + items.length + ' episodios encontrados', 'ok');
+    await cargarVista(tab);
+  } catch (e) {
+    setEstado(tab, '❌ Error: ' + e.message, 'err');
+  } finally {
+    boton.disabled = false;
+    boton.innerHTML = textoOriginal;
+  }
+};
+
+window.borrarBiblioteca = async function(tab) {
+  if (!confirm('¿Borrar la biblioteca de ' + tab + '?')) return;
+  try { await Filesystem.deleteFile({ path: 'biblioteca_' + tab + '.json', directory: Directory.Data }); } catch {}
+  setEstado(tab, '');
+  document.getElementById('lista-' + tab).innerHTML =
+    '<div class="vacio">Biblioteca borrada. Toca "Actualizar biblioteca"</div>';
+};
+
+// ---------- Carga y render ----------
+async function cargarVista(tab) {
+  const lista = document.getElementById('lista-' + tab);
+  const items = await leerJSON('biblioteca_' + tab + '.json');
+
+  if (!items || !items.length) {
+    lista.innerHTML = '<div class="vacio">Sin episodios. Toca "Actualizar biblioteca".</div>';
+    return;
+  }
+
+  lista.innerHTML = '';
+  for (let i = 0; i < items.length; i++) {
+    const it = items[i];
+    const div = document.createElement('div');
+    div.className = 'item';
+    const idAudio = 'audio_' + tab + '_' + i;
+
+    // Verificamos si el audio ya está descargado
+    const nombreArchivo = 'audio_' + tab + '_' + i + '.mp3';
+    const guardado = await existeArchivo(nombreArchivo);
+
+    div.innerHTML = `
+      <h3>${escapeHtml(it.titulo)}</h3>
+      <div class="meta">${formatearFecha(it.fecha)}</div>
+      <div class="acciones">
+        <button class="desc ${guardado ? 'guardado' : ''}"
+                data-tab="${tab}" data-i="${i}" data-url="${it.mp3}"
+                data-nombre="${nombreArchivo}">
+          ${guardado ? '✅ Guardado' : '⬇️ Descargar'}
+        </button>
+        <button class="play" data-tab="${tab}" data-i="${i}">▶️ Escuchar</button>
+      </div>
+      <div id="rep_${tab}_${i}"></div>
+    `;
+    lista.appendChild(div);
+  }
+}
+
+function escapeHtml(s) {
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+          .replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+}
+
+// ---------- Descarga de audio ----------
+document.addEventListener('click', async (e) => {
+  const boton = e.target.closest('button');
+  if (!boton) return;
+
+  // Descargar audio
+  if (boton.classList.contains('desc')) {
+    const tab = boton.dataset.tab;
+    const url = boton.dataset.url;
+    const nombre = boton.dataset.nombre;
+    const textoOrig = boton.innerHTML;
+    boton.disabled = true;
+    boton.innerHTML = '<span class="spinner"></span>';
+
+    try {
+      const res = await fetch(url);
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+      const buf = await res.arrayBuffer();
+      const base64 = btoa(String.fromCharCode(...new Uint8Array(buf)));
+
+      await Filesystem.writeFile({
+        path: nombre,
+        data: base64,
+        directory: Directory.Data
+      });
+
+      boton.classList.add('guardado');
+      boton.innerHTML = '✅ Guardado';
+      boton.disabled = false;
+    } catch (err) {
+      boton.innerHTML = '❌ Reintentar';
+      boton.disabled = false;
+      alert('Error al descargar: ' + err.message);
+    }
+  }
+
+  // Reproducir (desde el archivo guardado o desde URL)
+  if (boton.classList.contains('play')) {
+    const tab = boton.dataset.tab;
+    const i = boton.dataset.i;
+    const cont = document.getElementById('rep_' + tab + '_' + i);
+    const nombre = 'audio_' + tab + '_' + i + '.mp3';
+
+    if (cont.innerHTML) { cont.innerHTML = ''; boton.innerHTML = '▶️ Escuchar'; return; }
+
+    boton.innerHTML = '<span class="spinner"></span>';
+    try {
+      let src;
+      if (await existeArchivo(nombre)) {
+        const r = await Filesystem.readFile({ path: nombre, directory: Directory.Data });
+        src = 'data:audio/mp3;base64,' + r.data;
+      } else {
+        const items = await leerJSON('biblioteca_' + tab + '.json');
+        src = items[i].mp3;
       }
-    });
-  })
-  .catch(err => lista.textContent = 'Error cargando lecciones: ' + err);
+      cont.innerHTML = '<audio controls autoplay src="' + src + '"></audio>';
+      boton.innerHTML = '⏸️ Ocultar';
+    } catch (err) {
+      boton.innerHTML = '▶️ Escuchar';
+      alert('Error: ' + err.message);
+    }
+  }
+});
+
+// Cargar al inicio
+cargarVista('lecciones');
+cargarVista('entrevistas');
 </script>
 </body>
 </html>
