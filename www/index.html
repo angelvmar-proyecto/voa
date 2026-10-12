@@ -133,14 +133,14 @@ var CARPETA_TEXTOS = 'textos/';
 async function guardarJSON(nombre, datos) {
   await Filesystem.writeFile({
     path: nombre, data: JSON.stringify(datos),
-    directory: Directory.External, encoding: 'utf8'
+    directory: Directory.External, recursive: true, encoding: 'utf8'
   });
 }
 
 async function leerJSON(nombre) {
   try {
     var r = await Filesystem.readFile({
-      path: nombre, directory: Directory.External, encoding: 'utf8'
+      path: nombre, directory: Directory.External, recursive: true, encoding: 'utf8'
     });
     return JSON.parse(r.data);
   } catch (e) { return null; }
@@ -149,7 +149,7 @@ async function leerJSON(nombre) {
 async function leerTexto(nombre) {
   try {
     var r = await Filesystem.readFile({
-      path: nombre, directory: Directory.External, encoding: 'utf8'
+      path: nombre, directory: Directory.External, recursive: true, encoding: 'utf8'
     });
     return r.data;
   } catch (e) { return null; }
@@ -157,7 +157,7 @@ async function leerTexto(nombre) {
 
 async function existeArchivo(nombre) {
   try {
-    await Filesystem.stat({ path: nombre, directory: Directory.External });
+    await Filesystem.stat({ path: nombre, directory: Directory.External, recursive: true });
     return true;
   } catch (e) { return false; }
 }
@@ -226,7 +226,7 @@ function extraerLeccionesDeIndice(html) {
     var href = a.getAttribute('href') || '';
     var texto = a.innerText.trim();
     if (href.indexOf('/a/') === -1) continue;
-    if (!/(lesson|let.s learn english)/i.test(texto)) continue;
+    if (!/^Lesson\s+\d+/i.test(texto)) continue;
     if (!/(\d+)/.test(texto)) continue;
     if (href.indexOf('http') !== 0) {
       href = 'https://learningenglish.voanews.com' + (href.indexOf('/') === 0 ? '' : '/') + href;
@@ -332,7 +332,7 @@ window.borrarBiblioteca = async function(tab) {
   if (!confirm('¿Borrar la biblioteca de ' + tab + '?')) return;
   try {
     await Filesystem.deleteFile({
-      path: 'biblioteca_' + tab + '.json', directory: Directory.External
+      path: 'biblioteca_' + tab + '.json', directory: Directory.External, recursive: true
     });
   } catch (e) {}
   setEstado(tab, '');
@@ -396,7 +396,7 @@ window.cargarTurismo = async function() {
   // 2) Mostrar la ruta para el usuario
   try {
     var uri = await Filesystem.getUri({
-      path: CARPETA_TURISMO, directory: Directory.External
+      path: CARPETA_TURISMO, directory: Directory.External, recursive: true
     });
     var ruta = uri.uri.replace('file://', '');
     document.getElementById('ruta-turismo').innerHTML =
@@ -412,7 +412,7 @@ window.cargarTurismo = async function() {
 
   try {
     var result = await Filesystem.readdir({
-      path: CARPETA_TURISMO, directory: Directory.External
+      path: CARPETA_TURISMO, directory: Directory.External, recursive: true
     });
     var archivos = result.files || [];
     var mapa = {};
@@ -437,7 +437,7 @@ window.cargarTurismo = async function() {
         try {
           var r = await Filesystem.readFile({
             path: CARPETA_TURISMO + '/' + info.texto,
-            directory: Directory.External, encoding: 'utf8'
+            directory: Directory.External, recursive: true, encoding: 'utf8'
           });
           var primera = r.data.split('\n')[0].trim().replace(/^#+\s*/, '');
           if (primera && primera.length < 100) titulo = primera;
@@ -520,7 +520,7 @@ document.addEventListener('click', async function(e) {
       }
       var base64 = await bajar(mp3Url, false);
       await Filesystem.writeFile({
-        path: rutaAudio, data: base64, directory: Directory.External
+        path: rutaAudio, data: base64, directory: Directory.External, recursive: true
       });
       if (pagina) {
         try {
@@ -530,7 +530,7 @@ document.addEventListener('click', async function(e) {
           if (texto && texto.length > 100) {
             await Filesystem.writeFile({
               path: rutaTexto, data: texto,
-              directory: Directory.External, encoding: 'utf8'
+              directory: Directory.External, recursive: true, encoding: 'utf8'
             });
           }
         } catch (errTxt) {}
@@ -557,7 +557,7 @@ document.addEventListener('click', async function(e) {
     try {
       var src;
       if (await existeArchivo(rutaArchivo)) {
-        var r = await Filesystem.readFile({ path: rutaArchivo, directory: Directory.External });
+        var r = await Filesystem.readFile({ path: rutaArchivo, directory: Directory.External, recursive: true });
         src = 'data:audio/mpeg;base64,' + r.data;
       } else {
         var itemsA = await leerJSON('biblioteca_' + tabA + '.json');
@@ -589,7 +589,7 @@ document.addEventListener('click', async function(e) {
         texto = extraerTexto(htmlT);
         if (texto && texto.length > 50) {
           await Filesystem.writeFile({
-            path: rutaT, data: texto, directory: Directory.External, encoding: 'utf8'
+            path: rutaT, data: texto, directory: Directory.External, recursive: true, encoding: 'utf8'
           });
           boton.innerHTML = '📖 Texto';
         }
@@ -609,7 +609,7 @@ document.addEventListener('click', async function(e) {
     boton.disabled = true;
     try {
       var uriL = await Filesystem.getUri({
-        path: CARPETA_TURISMO + '/' + itL.audio, directory: Directory.External
+        path: CARPETA_TURISMO + '/' + itL.audio, directory: Directory.External, recursive: true
       });
       var srcL = window.Capacitor && window.Capacitor.convertFileSrc
         ? window.Capacitor.convertFileSrc(uriL.uri)
@@ -633,7 +633,7 @@ document.addEventListener('click', async function(e) {
     try {
       var rTL = await Filesystem.readFile({
         path: CARPETA_TURISMO + '/' + itTL.texto,
-        directory: Directory.External, encoding: 'utf8'
+        directory: Directory.External, recursive: true, encoding: 'utf8'
       });
       contTL.innerHTML = '<div class="texto-box">' + escapeHtml(rTL.data) + '</div>';
     } catch (err) {
