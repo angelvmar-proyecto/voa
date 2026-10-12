@@ -5,13 +5,13 @@ const UA = 'Mozilla/5.0 (Linux; Android 13) AppleWebKit/537.36 Chrome/120 Mobile
 
 async function fetchText(url) {
   const res = await fetch(url, { headers: { 'User-Agent': UA } });
-  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  if (!res.ok) throw new Error('HTTP ' + res.status);
   return await res.text();
 }
 
 async function downloadBinary(url, dest) {
   const res = await fetch(url, { headers: { 'User-Agent': UA } });
-  if (!res.ok) throw new Error(`HTTP ${res.status} al bajar MP3`);
+  if (!res.ok) throw new Error('HTTP ' + res.status + ' al bajar MP3');
   const buf = Buffer.from(await res.arrayBuffer());
   fs.writeFileSync(dest, buf);
   return buf.length;
@@ -23,7 +23,7 @@ function extractTitle(html) {
   m = html.match(/<title[^>]*>([^<]+)<\/title>/i);
   if (m) return m[1].replace(/\s*[-|].*$/, '').trim();
   m = html.match(/<h1[^>]*>([\s\S]*?)<\/h1>/i);
-  return m ? m[1].replace(/<[^>]+>/g, '').trim() : 'Lección VOA';
+  return m ? m[1].replace(/<[^>]+>/g, '').trim() : 'Leccion VOA';
 }
 
 function extractMp3(html) {
@@ -44,19 +44,6 @@ function extractMp3(html) {
   return null;
 }
 
-function extractArticle(html) {
-  const patterns = [
-    /<div[^>]*class="[^"]*\bwsw\b[^"]*"[^>]*>([\s\S]*?)<\/div>\s*<\/div>/i,
-    /<div[^>]*id="article-content"[^>]*>([\s\S]*?)<\/div>\s*<\/div>/i,
-    /<article[^>]*>([\s\S]*?)<\/article>/i
-  ];
-  for (const p of patterns) {
-    const m = html.match(p);
-    if (m && m[1].length > 200) return cleanHtml(m[1]);
-  }
-  return '';
-}
-
 function cleanHtml(s) {
   return s
     .replace(/<script[\s\S]*?<\/script>/gi, '')
@@ -69,30 +56,23 @@ function cleanHtml(s) {
     .replace(/&nbsp;/g, ' ')
     .replace(/&amp;/g, '&')
     .replace(/&quot;/g, '"')
+    .replace(/&#x27;/g, "'")
     .replace(/&#0?39;/g, "'")
     .replace(/&apos;/g, "'")
     .replace(/&lt;/g, '<')
     .replace(/&gt;/g, '>')
-    .replace(/&mdash;/g, '—')
-    .replace(/&ndash;/g, '–')
-    .replace(/&hellip;/g, '…')
+    .replace(/&mdash;/g, '\u2014')
+    .replace(/&ndash;/g, '\u2013')
+    .replace(/&hellip;/g, '\u2026')
     .replace(/[ \t]+/g, ' ')
     .replace(/\n{3,}/g, '\n\n')
     .trim();
 }
 
-function slugify(s) {
-  return s.toLowerCase()
-    .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
-    .replace(/[^a-z0-9]+/g, '_')
-    .replace(/^_+|_+$/g, '')
-    .slice(0, 40) || 'leccion';
-}
-
 function limpiarTexto(bruto) {
   let t = bruto;
 
-  // Cortar todo lo que venga después de marcadores de navegación/footer
+  // Cortar todo lo que venga despues de marcadores de navegacion/footer
   const cortes = [
     /\n\s*Related\s*\n/i,
     /\n\s*Follow Us\s*\n/i,
@@ -108,18 +88,14 @@ function limpiarTexto(bruto) {
     if (m > 200) { t = t.slice(0, m); break; }
   }
 
-  // Cortar todo lo que venga ANTES del título de la lección o de la primera sección real
-  const inicios = [
-    /Let[''']?s Learn English[^\n]*Lesson[^\n]*/i,
-    /Speaking Practice/i,
-    /Conversation/i
-  ];
+  // Cortar todo lo que venga ANTES de la primera seccion real
+  const inicios = [/Speaking Practice/i, /Conversation/i];
   for (const i of inicios) {
     const m = t.search(i);
     if (m > 0) { t = t.slice(m); break; }
   }
 
-  // Quitar líneas que son solo basura
+  // Quitar lineas que son solo basura o encabezados de seccion
   t = t.split('\n')
     .map(l => l.trim())
     .filter(l => {
@@ -129,50 +105,66 @@ function limpiarTexto(bruto) {
       if (/^Quiz - Lesson/i.test(l)) return false;
       if (/^\d{1,2}:\d{2}/.test(l)) return false;
       if (l.length < 2 && !/[a-zA-Z]/.test(l)) return false;
+
+      // Encabezados que no son parte del audio
+      if (/^Speaking Practice$/i.test(l)) return false;
+      if (/^Pronunciation( Practice)?$/i.test(l)) return false;
+      if (/^Conversation$/i.test(l)) return false;
+      if (/^Learn the alphabet$/i.test(l)) return false;
+      if (/^Listening Quiz$/i.test(l)) return false;
+      if (/^Let[''\u2019]?s Learn English[^\n]*Lesson[^\n]*$/i.test(l)) return false;
+      if (/^Lesson \d+\s*[-\u2013:]\s*.+$/i.test(l)) return false;
+      if (/^Video$/i.test(l)) return false;
+      if (/^Audio$/i.test(l)) return false;
+
       return true;
     })
     .join('\n');
 
-  // Colapsar múltiples saltos de línea
   t = t.replace(/\n{3,}/g, '\n\n');
-
-  // Quitar líneas en blanco al inicio y fin
   return t.trim();
 }
 
-async function procesar(url, lecciones, idx) {
-  // 1. Transformar a URL AMP
-  const urlAmp = url.replace('learningenglish.voanews.com/a/', 'learningenglish.voanews.com/amp/');
-  console.log(`\n📥 [${idx}] ${url}`);
-  console.log(`   Usando AMP: ${urlAmp}`);
+function slugify(s) {
+  return s.toLowerCase()
+    .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z0-9]+/g, '_')
+    .replace(/^_+|_+$/g, '')
+    .slice(0, 40) || 'leccion';
+}
 
-  const html = await fetchText(urlAmp); // Usamos la URL AMP
+async function procesar(url, lecciones, idx) {
+  const urlAmp = url.replace('learningenglish.voanews.com/a/', 'learningenglish.voanews.com/amp/');
+  console.log('\n📥 [' + idx + '] ' + url);
+  console.log('   Usando AMP: ' + urlAmp);
+
+  const html = await fetchText(urlAmp);
   const titulo = extractTitle(html);
   const mp3Url = extractMp3(html);
-  
-  // 2. Extracción de texto mejorada para AMP (más simple y directa)
-const texto = limpiarTexto(cleanHtml(html.replace(/[\s\S]*<body[^>]*>/, '').replace(/<\/body>[\s\S]*/, '')));  
+  const texto = limpiarTexto(
+    cleanHtml(html.replace(/[\s\S]*<body[^>]*>/, '').replace(/<\/body>[\s\S]*/, ''))
+  );
 
-  console.log(`   Título: ${titulo}`);
+  console.log('   Titulo: ' + titulo);
 
-  if (!mp3Url) { console.log('   ⚠️  Sin MP3, saltando'); return false; }
-  if (!texto || texto.length < 100) { console.log('   ⚠️  Texto insuficiente, saltando'); return false; }
+  if (!mp3Url) { console.log('   Sin MP3, saltando'); return false; }
+  if (!texto || texto.length < 50) { console.log('   Texto insuficiente, saltando'); return false; }
 
-  const nombre = `l${String(idx).padStart(3, '0')}_${slugify(titulo)}.mp3`;
-  const rutaRel = `audios/${nombre}`;
+  const nombre = 'l' + String(idx).padStart(3, '0') + '_' + slugify(titulo) + '.mp3';
+  const rutaRel = 'audios/' + nombre;
   const rutaAbs = path.join('www', rutaRel);
 
   const bytes = await downloadBinary(mp3Url, rutaAbs);
-  console.log(`   🎵 MP3: ${(bytes / 1024 / 1024).toFixed(2)} MB`);
-  console.log(`   📖 Texto: ${texto.length} caracteres`);
+  console.log('   MP3: ' + (bytes / 1024 / 1024).toFixed(2) + ' MB');
+  console.log('   Texto: ' + texto.length + ' caracteres');
 
-  lecciones.push({ titulo, texto, audio: rutaRel });
+  lecciones.push({ titulo: titulo, texto: texto, audio: rutaRel });
   return true;
 }
 
 async function main() {
   if (!fs.existsSync('urls.txt')) {
-    console.log('❌ Crea un archivo urls.txt con una URL por línea.');
+    console.log('Crea un archivo urls.txt con una URL por linea.');
     process.exit(1);
   }
 
@@ -181,7 +173,7 @@ async function main() {
     .filter(l => l && !l.startsWith('#') && l.startsWith('http'));
 
   if (!urls.length) {
-    console.log('❌ urls.txt está vacío o no tiene URLs válidas.');
+    console.log('urls.txt esta vacio o no tiene URLs validas.');
     process.exit(1);
   }
 
@@ -190,22 +182,22 @@ async function main() {
   const jsonPath = 'www/lecciones.json';
   let lecciones = [];
   if (fs.existsSync(jsonPath)) {
-    try { lecciones = JSON.parse(fs.readFileSync(jsonPath, 'utf8')); } catch {}
+    try { lecciones = JSON.parse(fs.readFileSync(jsonPath, 'utf8')); } catch (e) {}
   }
-  console.log(`📚 Ya tienes ${lecciones.length} lecciones guardadas.`);
+  console.log('📚 Ya tienes ' + lecciones.length + ' lecciones guardadas.');
 
   let ok = 0, idx = lecciones.length + 1;
   for (const url of urls) {
     try {
       if (await procesar(url, lecciones, idx)) { ok++; idx++; }
     } catch (e) {
-      console.log(`   ❌ Error: ${e.message}`);
+      console.log('   Error: ' + e.message);
     }
   }
 
   fs.writeFileSync(jsonPath, JSON.stringify(lecciones, null, 2), 'utf8');
-  console.log(`\n✅ Añadidas: ${ok} | Total: ${lecciones.length}`);
-  console.log(`📁 Actualizado: ${jsonPath}`);
+  console.log('\n✅ Anadidas: ' + ok + ' | Total: ' + lecciones.length);
+  console.log('📁 Actualizado: ' + jsonPath);
 }
 
 main().catch(e => { console.error('Fatal:', e); process.exit(1); });
