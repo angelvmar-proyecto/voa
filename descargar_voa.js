@@ -89,6 +89,57 @@ function slugify(s) {
     .slice(0, 40) || 'leccion';
 }
 
+function limpiarTexto(bruto) {
+  let t = bruto;
+
+  // Cortar todo lo que venga después de marcadores de navegación/footer
+  const cortes = [
+    /\n\s*Related\s*\n/i,
+    /\n\s*Follow Us\s*\n/i,
+    /\n\s*About Learning English\s*\n/i,
+    /\n\s*Video Programs\s*\n/i,
+    /\n\s*Audio Programs\s*\n/i,
+    /\n\s*Subscribe to Podcast/i,
+    /\n\s*Find Us on Satellite/i,
+    /\n\s*Our Policy About Comments/i
+  ];
+  for (const c of cortes) {
+    const m = t.search(c);
+    if (m > 200) { t = t.slice(0, m); break; }
+  }
+
+  // Cortar todo lo que venga ANTES del título de la lección o de la primera sección real
+  const inicios = [
+    /Let[''']?s Learn English[^\n]*Lesson[^\n]*/i,
+    /Speaking Practice/i,
+    /Conversation/i
+  ];
+  for (const i of inicios) {
+    const m = t.search(i);
+    if (m > 0) { t = t.slice(m); break; }
+  }
+
+  // Quitar líneas que son solo basura
+  t = t.split('\n')
+    .map(l => l.trim())
+    .filter(l => {
+      if (!l) return false;
+      if (/^Download Lesson/i.test(l)) return false;
+      if (/^Your browser doesn/i.test(l)) return false;
+      if (/^Quiz - Lesson/i.test(l)) return false;
+      if (/^\d{1,2}:\d{2}/.test(l)) return false;
+      if (l.length < 2 && !/[a-zA-Z]/.test(l)) return false;
+      return true;
+    })
+    .join('\n');
+
+  // Colapsar múltiples saltos de línea
+  t = t.replace(/\n{3,}/g, '\n\n');
+
+  // Quitar líneas en blanco al inicio y fin
+  return t.trim();
+}
+
 async function procesar(url, lecciones, idx) {
   // 1. Transformar a URL AMP
   const urlAmp = url.replace('learningenglish.voanews.com/a/', 'learningenglish.voanews.com/amp/');
@@ -100,7 +151,7 @@ async function procesar(url, lecciones, idx) {
   const mp3Url = extractMp3(html);
   
   // 2. Extracción de texto mejorada para AMP (más simple y directa)
-  const texto = cleanHtml(html.replace(/[\s\S]*<body[^>]*>/, '').replace(/<\/body>[\s\S]*/, ''));
+const texto = limpiarTexto(cleanHtml(html.replace(/[\s\S]*<body[^>]*>/, '').replace(/<\/body>[\s\S]*/, '')));  
 
   console.log(`   Título: ${titulo}`);
 
