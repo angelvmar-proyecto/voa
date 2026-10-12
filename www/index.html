@@ -35,18 +35,23 @@
           margin-bottom: 10px; box-shadow: 0 1px 4px rgba(0,0,0,.06); }
   .item h3 { font-size: 15px; margin: 0 0 6px; line-height: 1.3; }
   .item .meta { font-size: 12px; color: #64748b; margin-bottom: 8px; }
-  .item .acciones { display: flex; gap: 8px; }
-  .item button { flex: 1; padding: 10px; border: 0; border-radius: 8px;
-                 font-size: 14px; cursor: pointer; font-weight: 600; }
+  .item .acciones { display: flex; gap: 6px; }
+  .item button { flex: 1; padding: 10px 6px; border: 0; border-radius: 8px;
+                 font-size: 13px; cursor: pointer; font-weight: 600; }
   .item .desc { background: #2563eb; color: #fff; }
   .item .desc.guardado { background: #16a34a; }
   .item .play { background: #e2e8f0; color: #1e293b; }
+  .item .texto { background: #f59e0b; color: #fff; }
   .item audio { width: 100%; margin-top: 8px; }
+  .texto-box { background: #fffbeb; border: 1px solid #fcd34d;
+               border-radius: 8px; padding: 12px; margin-top: 8px;
+               white-space: pre-wrap; line-height: 1.6; font-size: 15px;
+               max-height: 400px; overflow-y: auto; }
   .vacio { text-align: center; color: #94a3b8; padding: 40px 16px; font-size: 15px; }
-  .spinner { display: inline-block; width: 14px; height: 14px;
+  .spinner { display: inline-block; width: 12px; height: 12px;
              border: 2px solid #fff; border-top-color: transparent;
              border-radius: 50%; animation: giro .8s linear infinite;
-             vertical-align: middle; margin-right: 6px; }
+             vertical-align: middle; margin-right: 4px; }
   @keyframes giro { to { transform: rotate(360deg); } }
   footer { position: fixed; bottom: 0; left: 0; right: 0; background: #1e293b;
            color: #cbd5e1; font-size: 11px; padding: 8px 12px; text-align: center;
@@ -93,6 +98,7 @@
 <script>
 // ================================================================
 // FEEDS RSS DE VOA LEARNING ENGLISH
+// Cambia estas URLs si quieres otras secciones.
 // ================================================================
 var FEEDS = {
   lecciones:   'https://learningenglish.voanews.com/podcast/?count=20&zoneId=1689',
@@ -109,26 +115,32 @@ var Directory = {
   External: 'EXTERNAL'
 };
 
-// Carpeta visible: /storage/emulated/0/Android/data/com.angelvmar.voa/files/
 var CARPETA_AUDIOS = 'audios/';
+var CARPETA_TEXTOS = 'textos/';
 
+// ---------- Archivos ----------
 async function guardarJSON(nombre, datos) {
   await Filesystem.writeFile({
-    path: nombre,
-    data: JSON.stringify(datos),
-    directory: Directory.External,
-    encoding: 'utf8'
+    path: nombre, data: JSON.stringify(datos),
+    directory: Directory.External, encoding: 'utf8'
   });
 }
 
 async function leerJSON(nombre) {
   try {
     var r = await Filesystem.readFile({
-      path: nombre,
-      directory: Directory.External,
-      encoding: 'utf8'
+      path: nombre, directory: Directory.External, encoding: 'utf8'
     });
     return JSON.parse(r.data);
+  } catch (e) { return null; }
+}
+
+async function leerTexto(nombre) {
+  try {
+    var r = await Filesystem.readFile({
+      path: nombre, directory: Directory.External, encoding: 'utf8'
+    });
+    return r.data;
   } catch (e) { return null; }
 }
 
@@ -139,6 +151,7 @@ async function existeArchivo(nombre) {
   } catch (e) { return false; }
 }
 
+// ---------- Descarga ----------
 async function bajar(url, comoTexto) {
   if (Plugins.CapacitorHttp) {
     var opts = { url: url, headers: { 'User-Agent': 'Mozilla/5.0' } };
@@ -155,9 +168,62 @@ async function bajar(url, comoTexto) {
   return comoTexto ? await res.text() : await res.arrayBuffer();
 }
 
-function limpiar(s) {
-  return (s || '').replace(/<!\[CDATA\[|\]\]>/g, '').trim();
+// ---------- Extraer texto de la lección ----------
+function extraerTexto(html) {
+  try {
+    var doc = new DOMParser().parseFromString(html, 'text/html');
+
+    // Probar selectores comunes de VOA
+    var art = doc.querySelector('.wsw') ||
+              doc.querySelector('#article-content') ||
+              doc.querySelector('.article-content') ||
+              doc.querySelector('article') ||
+              doc.querySelector('main');
+
+    var texto = art ? art.innerText : doc.body.innerText;
+
+    // Limpieza
+    texto = texto
+      .replace(/\r/g, '')
+      .split('\n')
+      .map(function(l) { return l.trim(); })
+      .filter(function(l) {
+        if (!l) return false;
+        if (/^Download Lesson/i.test(l)) return false;
+        if (/^Your browser doesn/i.test(l)) return false;
+        if (/^Quiz - Lesson/i.test(l)) return false;
+        if (/^\d{1,2}:\d{2}/.test(l)) return false;
+        if (/^Speaking Practice$/i.test(l)) return false;
+        if (/^Pronunciation( Practice)?$/i.test(l)) return false;
+        if (/^Conversation$/i.test(l)) return false;
+        if (/^Learn the alphabet$/i.test(l)) return false;
+        if (/^Listening Quiz$/i.test(l)) return false;
+        if (/^Video$/i.test(l)) return false;
+        if (/^Audio$/i.test(l)) return false;
+        if (/^Follow Us$/i.test(l)) return false;
+        if (/^Related$/i.test(l)) return false;
+        if (/^About Learning English$/i.test(l)) return false;
+        return true;
+      })
+      .join('\n');
+
+    texto = texto.replace(/\n{3,}/g, '\n\n').trim();
+
+    // Cortar todo después de "Related" / "Follow Us"
+    var cortes = [/\nRelated\s*\n/i, /\nFollow Us\s*\n/i, /\nAbout Learning English\s*\n/i];
+    for (var i = 0; i < cortes.length; i++) {
+      var m = texto.search(cortes[i]);
+      if (m > 200) { texto = texto.slice(0, m).trim(); break; }
+    }
+
+    return texto;
+  } catch (e) {
+    return '';
+  }
 }
+
+// ---------- RSS ----------
+function limpiar(s) { return (s || '').replace(/<!\[CDATA\[|\]\]>/g, '').trim(); }
 
 function parsearRSS(xml) {
   var items = xml.match(/<item[\s>][\s\S]*?<\/item>/g) || [];
@@ -178,6 +244,7 @@ function parsearRSS(xml) {
   }).filter(Boolean);
 }
 
+// ---------- UI ----------
 window.cambiarTab = function(tab) {
   document.querySelectorAll('.tabs button').forEach(function(b) { b.classList.remove('activo'); });
   document.querySelectorAll('.contenido').forEach(function(c) { c.classList.remove('activo'); });
@@ -206,6 +273,7 @@ function escapeHtml(s) {
                   .replace(/"/g,'&quot;').replace(/'/g,'&#39;');
 }
 
+// ---------- Biblioteca ----------
 window.actualizarBiblioteca = async function(tab) {
   var boton = document.querySelector('#contenido-' + tab + ' .barra button');
   boton.disabled = true;
@@ -253,9 +321,11 @@ async function cargarVista(tab) {
   lista.innerHTML = '';
   for (var i = 0; i < items.length; i++) {
     var it = items[i];
-    var nombreArchivo = 'l' + i + '.mp3';
-    var rutaArchivo = CARPETA_AUDIOS + nombreArchivo;
-    var guardado = await existeArchivo(rutaArchivo);
+    var rutaAudio = CARPETA_AUDIOS + 'l' + i + '.mp3';
+    var rutaTexto = CARPETA_TEXTOS + 'l' + i + '.txt';
+    var guardado = await existeArchivo(rutaAudio);
+    var tieneTexto = await existeArchivo(rutaTexto);
+
     var div = document.createElement('div');
     div.className = 'item';
     div.innerHTML =
@@ -264,36 +334,68 @@ async function cargarVista(tab) {
       '<div class="acciones">' +
         '<button class="desc ' + (guardado ? 'guardado' : '') + '" ' +
                 'data-tab="' + tab + '" data-i="' + i + '" ' +
-                'data-url="' + escapeHtml(it.mp3) + '" ' +
-                'data-nombre="' + rutaArchivo + '">' +
+                'data-mp3="' + escapeHtml(it.mp3) + '" ' +
+                'data-pagina="' + escapeHtml(it.pagina || '') + '" ' +
+                'data-ruta-audio="' + rutaAudio + '" ' +
+                'data-ruta-texto="' + rutaTexto + '">' +
           (guardado ? '✅ Guardado' : '⬇️ Descargar') +
         '</button>' +
-        '<button class="play" data-tab="' + tab + '" data-i="' + i + '">▶️ Escuchar</button>' +
+        '<button class="play" data-tab="' + tab + '" data-i="' + i + '">▶️ Audio</button>' +
+        '<button class="texto ' + (tieneTexto ? '' : 'pendiente') + '" ' +
+                'data-tab="' + tab + '" data-i="' + i + '" ' +
+                'data-ruta-texto="' + rutaTexto + '" ' +
+                'data-pagina="' + escapeHtml(it.pagina || '') + '">' +
+          (tieneTexto ? '📖 Texto' : '📄 Bajar txt') +
+        '</button>' +
       '</div>' +
-      '<div id="rep_' + tab + '_' + i + '"></div>';
+      '<div id="rep_' + tab + '_' + i + '"></div>' +
+      '<div id="txt_' + tab + '_' + i + '"></div>';
     lista.appendChild(div);
   }
 }
 
+// ---------- Clicks ----------
 document.addEventListener('click', async function(e) {
   var boton = e.target.closest('button');
   if (!boton) return;
 
+  // === DESCARGAR (audio + texto automáticamente) ===
   if (boton.classList.contains('desc')) {
-    var nombre = boton.dataset.nombre;
-    var url = boton.dataset.url;
+    var mp3Url = boton.dataset.mp3;
+    var pagina = boton.dataset.pagina;
+    var rutaAudio = boton.dataset.rutaAudio;
+    var rutaTexto = boton.dataset.rutaTexto;
     boton.disabled = true;
-    boton.innerHTML = '<span class="spinner"></span>';
+    boton.innerHTML = '<span class="spinner"></span> Bajando...';
+
     try {
-      var base64 = await bajar(url, false);
+      // 1) Bajar MP3
+      var base64 = await bajar(mp3Url, false);
       await Filesystem.writeFile({
-        path: nombre,
-        data: base64,
-        directory: Directory.External
+        path: rutaAudio, data: base64, directory: Directory.External
       });
+
+      // 2) Bajar texto de la página de la lección
+      if (pagina) {
+        try {
+          boton.innerHTML = '<span class="spinner"></span> Texto...';
+          var html = await bajar(pagina, true);
+          var texto = extraerTexto(html);
+          if (texto && texto.length > 100) {
+            await Filesystem.writeFile({
+              path: rutaTexto, data: texto,
+              directory: Directory.External, encoding: 'utf8'
+            });
+          }
+        } catch (errTxt) {
+          console.log('Sin texto:', errTxt.message);
+        }
+      }
+
       boton.classList.add('guardado');
       boton.innerHTML = '✅ Guardado';
       boton.disabled = false;
+      await cargarVista(boton.dataset.tab);
     } catch (err) {
       boton.innerHTML = '❌ Reintentar';
       boton.disabled = false;
@@ -301,15 +403,16 @@ document.addEventListener('click', async function(e) {
     }
   }
 
+  // === REPRODUCIR AUDIO ===
   if (boton.classList.contains('play')) {
-    var tab = boton.dataset.tab;
-    var i = boton.dataset.i;
-    var cont = document.getElementById('rep_' + tab + '_' + i);
-    var rutaArchivo = CARPETA_AUDIOS + 'l' + i + '.mp3';
+    var tabA = boton.dataset.tab;
+    var iA = boton.dataset.i;
+    var cont = document.getElementById('rep_' + tabA + '_' + iA);
+    var rutaArchivo = CARPETA_AUDIOS + 'l' + iA + '.mp3';
 
     if (cont.innerHTML) {
       cont.innerHTML = '';
-      boton.innerHTML = '▶️ Escuchar';
+      boton.innerHTML = '▶️ Audio';
       return;
     }
 
@@ -318,19 +421,60 @@ document.addEventListener('click', async function(e) {
       var src;
       if (await existeArchivo(rutaArchivo)) {
         var r = await Filesystem.readFile({
-          path: rutaArchivo,
-          directory: Directory.External
+          path: rutaArchivo, directory: Directory.External
         });
         src = 'data:audio/mpeg;base64,' + r.data;
       } else {
-        var items = await leerJSON('biblioteca_' + tab + '.json');
-        src = items[i].mp3;
+        var itemsA = await leerJSON('biblioteca_' + tabA + '.json');
+        src = itemsA[iA].mp3;
       }
       cont.innerHTML = '<audio controls autoplay src="' + src + '"></audio>';
       boton.innerHTML = '⏸️ Ocultar';
     } catch (err) {
-      boton.innerHTML = '▶️ Escuchar';
+      boton.innerHTML = '▶️ Audio';
       alert('Error: ' + err.message);
+    }
+    boton.disabled = false;
+  }
+
+  // === MOSTRAR / BAJAR TEXTO ===
+  if (boton.classList.contains('texto')) {
+    var tabT = boton.dataset.tab;
+    var iT = boton.dataset.i;
+    var contT = document.getElementById('txt_' + tabT + '_' + iT);
+    var rutaT = boton.dataset.rutaTexto;
+    var paginaT = boton.dataset.pagina;
+
+    if (contT.innerHTML) {
+      contT.innerHTML = '';
+      return;
+    }
+
+    boton.disabled = true;
+    var texto = await leerTexto(rutaT);
+
+    // Si no está descargado, bajarlo ahora
+    if (!texto && paginaT) {
+      boton.innerHTML = '<span class="spinner"></span> Bajando...';
+      try {
+        var htmlT = await bajar(paginaT, true);
+        texto = extraerTexto(htmlT);
+        if (texto && texto.length > 50) {
+          await Filesystem.writeFile({
+            path: rutaT, data: texto,
+            directory: Directory.External, encoding: 'utf8'
+          });
+          boton.innerHTML = '📖 Texto';
+        }
+      } catch (err) {
+        texto = 'Error al bajar el texto: ' + err.message;
+      }
+    }
+
+    if (texto) {
+      contT.innerHTML = '<div class="texto-box">' + escapeHtml(texto) + '</div>';
+    } else {
+      contT.innerHTML = '<div class="texto-box">No hay texto disponible.</div>';
     }
     boton.disabled = false;
   }
