@@ -232,3 +232,37 @@ async function mostrarTextoVOA(tab, i, boton) {
   else cont.innerHTML = '<div class="texto-box">No hay texto.</div>';
   boton.disabled = false;
 }
+
+
+async function borrarTextos(tab) {
+  if (!confirm('¿Borrar TODOS los textos de ' + tab + ' para volver a generarlos?')) return;
+  var items = await leerJSON('biblioteca_' + tab + '.json');
+  if (!items || !items.length) { alert('No hay nada que borrar.'); return; }
+  var borrados = 0, errores = 0;
+  for (var i = 0; i < items.length; i++) {
+    var rutas = rutasPara(tab, items[i].titulo);
+    try {
+      await Filesystem.deleteFile({ path: rutas.texto, directory: Directory.External });
+      borrados++;
+    } catch (e) { errores++; }
+  }
+  await cargarVista(tab);
+  alert('Textos borrados: ' + borrados + (errores ? ' (no existian: ' + errores + ')' : ''));
+  setEstado(tab, '✅ ' + borrados + ' textos borrados. Toca "📄 Bajar txt" para regenerarlos.', 'ok');
+}
+
+async function borrarAudios(tab) {
+  if (!confirm('¿Borrar TODOS los audios de ' + tab + '?')) return;
+  var items = await leerJSON('biblioteca_' + tab + '.json');
+  if (!items || !items.length) { alert('No hay nada que borrar.'); return; }
+  var borrados = 0;
+  for (var i = 0; i < items.length; i++) {
+    var rutas = rutasPara(tab, items[i].titulo);
+    try {
+      await Filesystem.deleteFile({ path: rutas.audio, directory: Directory.External });
+      borrados++;
+    } catch (e) {}
+  }
+  await cargarVista(tab);
+  alert('Audios borrados: ' + borrados);
+}
