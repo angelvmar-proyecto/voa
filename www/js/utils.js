@@ -34,14 +34,41 @@ function setEstado(tab, msg, tipo) {
 function extraerTexto(html) {
   try {
     var doc = new DOMParser().parseFromString(html, 'text/html');
-    var art = doc.querySelector('.wsw') || doc.querySelector('#article-content') ||
-              doc.querySelector('.article-content') || doc.querySelector('article') ||
-              doc.querySelector('main');
-    var texto = art ? art.innerText : doc.body.innerText;
+
+    // 1) Eliminar TODOS los nodos basura antes de leer texto
+    var basura = doc.querySelectorAll(
+      'script, style, noscript, svg, iframe, ' +
+      'nav, header, footer, aside, ' +
+      '.nav, .menu, .sidebar, .comments, .comment, ' +
+      '.related, .share, .social, .newsletter, .ad, .ads, .advert, ' +
+      '[class*="banner"], [class*="promo"], [class*="widget"]'
+    );
+    for (var k = 0; k < basura.length; k++) {
+      if (basura[k].parentNode) basura[k].parentNode.removeChild(basura[k]);
+    }
+
+    // 2) Buscar el contenedor del artículo
+    var art = doc.querySelector('.wsw') ||
+              doc.querySelector('#article-content') ||
+              doc.querySelector('.article-content') ||
+              doc.querySelector('.wysiwyg') ||
+              doc.querySelector('article') ||
+              doc.querySelector('main') ||
+              doc.querySelector('[itemprop="articleBody"]');
+
+    var texto = art ? art.innerText : (doc.body ? doc.body.innerText : '');
+
+    // 3) Limpieza línea por línea
     texto = texto.replace(/\r/g, '').split('\n')
       .map(function(l) { return l.trim(); })
       .filter(function(l) {
         if (!l) return false;
+        // Líneas de código JS / CSS detectables
+        if (/^(var|let|const|function|if|for|while|window\.|document\.|return)\b/.test(l)) return false;
+        if (/[{};]\s*$/.test(l) && /[=\[\]()]/.test(l)) return false;
+        if (/gtmEventObject|dataLayer|renderGtm|createElement|getElementsByTagName/.test(l)) return false;
+        if (/^\/\*|\*\/$/.test(l)) return false;
+        // Basura común de la web
         if (/^Download Lesson/i.test(l)) return false;
         if (/^Your browser doesn/i.test(l)) return false;
         if (/^Quiz - Lesson/i.test(l)) return false;
@@ -56,14 +83,22 @@ function extraerTexto(html) {
         if (/^Follow Us$/i.test(l)) return false;
         if (/^Related$/i.test(l)) return false;
         if (/^About Learning English$/i.test(l)) return false;
+        if (/^Share$/i.test(l)) return false;
+        if (/^Advertisement$/i.test(l)) return false;
+        // Líneas sin letras (solo símbolos)
+        if (!/[A-Za-zÁÉÍÓÚÑáéíóúñ]/.test(l)) return false;
         return true;
       }).join('\n');
+
     texto = texto.replace(/\n{3,}/g, '\n\n').trim();
+
+    // 4) Cortar en marcadores de fin
     var cortes = [/\nRelated\s*\n/i, /\nFollow Us\s*\n/i, /\nAbout Learning English\s*\n/i];
     for (var i = 0; i < cortes.length; i++) {
       var m = texto.search(cortes[i]);
       if (m > 200) { texto = texto.slice(0, m).trim(); break; }
     }
+
     return texto;
   } catch (e) { return ''; }
 }
