@@ -102,3 +102,29 @@ function extraerTexto(html) {
     return texto;
   } catch (e) { return ''; }
 }
+
+
+// Extrae texto limpio de un fragmento HTML (usado para el texto del RSS)
+function extraerTextoDeHtml(html) {
+  try {
+    var doc = new DOMParser().parseFromString(html, 'text/html');
+    var basura = doc.querySelectorAll('script, style, noscript, svg, iframe');
+    for (var k = 0; k < basura.length; k++) {
+      if (basura[k].parentNode) basura[k].parentNode.removeChild(basura[k]);
+    }
+    var texto = doc.body ? doc.body.innerText : '';
+    texto = texto.replace(/\r/g, '').split('\n')
+      .map(function(l) { return l.trim(); })
+      .filter(function(l) {
+        if (!l) return false;
+        if (!/[A-Za-z\u00c0-\u017f]/.test(l)) return false;
+        if (/^Download Lesson/i.test(l)) return false;
+        if (/^Your browser doesn/i.test(l)) return false;
+        if (/^Advertisement$/i.test(l)) return false;
+        if (/^Share$/i.test(l)) return false;
+        if (/^Follow Us$/i.test(l)) return false;
+        return true;
+      }).join('\n');
+    return texto.replace(/\n{3,}/g, '\n\n').trim();
+  } catch (e) { return ''; }
+}

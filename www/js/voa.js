@@ -34,12 +34,24 @@ function parsearRSS(xml) {
               it.match(/(https?:\/\/[^\s"'<>\\]+\.mp3)/i);
     var link = it.match(/<link>([\s\S]*?)<\/link>/);
     var pub = it.match(/<pubDate>([\s\S]*?)<\/pubDate>/);
+
+    // Texto del articulo incluido en el RSS
+    var contenido = '';
+    var m1 = it.match(/<content:encoded>([\s\S]*?)<\/content:encoded>/);
+    if (m1) contenido = m1[1];
+    else {
+      var m2 = it.match(/<description>([\s\S]*?)<\/description>/);
+      if (m2) contenido = m2[1];
+    }
+    contenido = limpiar(contenido);
+
     if (!t || !mp3) return null;
     return {
       titulo: limpiar(t[1]),
       mp3: limpiar(mp3[1].replace(/\\\//g, '/')),
       pagina: link ? limpiar(link[1]) : null,
-      fecha: pub ? limpiar(pub[1]) : ''
+      fecha: pub ? limpiar(pub[1]) : '',
+      texto_incluido: contenido
     };
   }).filter(Boolean);
 }
@@ -152,15 +164,22 @@ async function descargarVOA(tab, i, boton) {
     var base64 = await bajar(mp3Url, false);
     await escribirArchivo(rutas.audio, base64);
 
-    if (it.pagina) {
+    // Texto: primero intentar con el que viene en el RSS
+    var textoFinal = '';
+    if (it.texto_incluido && it.texto_incluido.length > 50) {
+      boton.innerHTML = '<span class="spinner"></span> Texto...';
+      textoFinal = extraerTextoDeHtml(it.texto_incluido);
+    }
+    // Si no hay texto en el RSS, scrapear la pagina
+    if (!textoFinal && it.pagina) {
       try {
         boton.innerHTML = '<span class="spinner"></span> Texto...';
         var html = await bajar(it.pagina, true);
-        var texto = extraerTexto(html);
-        if (texto && texto.length > 100) {
-          await escribirArchivo(rutas.texto, texto, 'utf8');
-        }
+        textoFinal = extraerTexto(html);
       } catch (errTxt) { console.log('Sin texto:', errTxt.message); }
+    }
+    if (textoFinal && textoFinal.length > 50) {
+      await escribirArchivo(rutas.texto, textoFinal, 'utf8');
     }
 
     boton.classList.add('guardado');
@@ -216,6 +235,13 @@ async function mostrarTextoVOA(tab, i, boton) {
   boton.disabled = true;
   var texto = await leerTexto(rutas.texto);
 
+  if (!texto && it.texto_incluido && it.texto_incluido.length > 50) {
+    texto = extraerTextoDeHtml(it.texto_incluido);
+    if (texto && texto.length > 50) {
+      await escribirArchivo(rutas.texto, texto, 'utf8');
+      boton.innerHTML = '📖 Texto';
+    }
+  }
   if (!texto && it.pagina) {
     boton.innerHTML = '<span class="spinner"></span> Bajando...';
     try {
