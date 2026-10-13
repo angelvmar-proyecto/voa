@@ -115,6 +115,26 @@ function aAmp(url) {
   return url.replace('learningenglish.voanews.com/a/', 'learningenglish.voanews.com/amp/');
 }
 
+async function obtenerHtmlArticulo(url) {
+  // Intentar AMP primero
+  try {
+    var amp = aAmp(url);
+    var html = await bajar(amp, true);
+    if (html && html.length > 5000 && /<body/i.test(html)) {
+      return html;
+    }
+  } catch (e) {
+    console.log('AMP falló:', e.message);
+  }
+  // Fallback: URL normal
+  try {
+    return await bajar(url, true);
+  } catch (e) {
+    console.log('URL normal falló:', e.message);
+    return '';
+  }
+}
+
 async function cargarVista(tab) {
   var lista = document.getElementById('lista-' + tab);
   if (!lista) return;
@@ -173,7 +193,7 @@ async function descargarVOA(tab, i, boton) {
       try {
         boton.innerHTML = '<span class="spinner"></span> Texto...';
         // Usar version AMP (trae el texto estatico)
-        var html = await bajar(aAmp(it.pagina), true);
+        var html = await obtenerHtmlArticulo(it.pagina);
         var texto = extraerTexto(html);
         if (texto && texto.length > 50) {
           await escribirArchivo(rutas.texto, texto, 'utf8');
@@ -235,7 +255,7 @@ async function mostrarTextoVOA(tab, i, boton) {
   if (!texto && it.pagina) {
     boton.innerHTML = '<span class="spinner"></span> Bajando...';
     try {
-      var html = await bajar(aAmp(it.pagina), true);
+      var html = await obtenerHtmlArticulo(it.pagina);
       texto = extraerTexto(html);
       if (texto && texto.length > 50) {
         await escribirArchivo(rutas.texto, texto, 'utf8');
