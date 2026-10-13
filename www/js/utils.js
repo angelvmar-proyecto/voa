@@ -31,23 +31,70 @@ function setEstado(tab, msg, tipo) {
   el.style.display = msg ? 'block' : 'none';
 }
 
+// Lista negra compartida
+function esBasura(l) {
+  if (!l) return true;
+  if (!/[A-Za-z\u00c0-\u017f]/.test(l)) return true;
+  // Codigo JS / CSS
+  if (/^(var|let|const|function|if|for|while|window\.|document\.|return)\b/.test(l)) return true;
+  if (/gtmEventObject|dataLayer|renderGtm|createElement|getElementsByTagName/.test(l)) return true;
+  if (/[{};]\s*$/.test(l) && /[=\[\]()]/.test(l)) return true;
+  if (/^\/\*|\*\/$/.test(l)) return true;
+  // Navegacion web VOA
+  if (/^Accessibility links$/i.test(l)) return true;
+  if (/^Skip to /i.test(l)) return true;
+  if (/^Languages$/i.test(l)) return true;
+  if (/^Search$/i.test(l)) return true;
+  if (/^Previous$/i.test(l)) return true;
+  if (/^Next$/i.test(l)) return true;
+  if (/^Subscribe$/i.test(l)) return true;
+  if (/^Articles$/i.test(l)) return true;
+  if (/^Episodes$/i.test(l)) return true;
+  if (/^About$/i.test(l)) return true;
+  if (/^Menu$/i.test(l)) return true;
+  if (/^Podcasts?$/i.test(l)) return true;
+  if (/^Breaking News$/i.test(l)) return true;
+  if (/^Science & Technology$/i.test(l)) return true;
+  // Reproductor / share
+  if (/^\d+\s*kbps/i.test(l)) return true;
+  if (/^Pop-out player$/i.test(l)) return true;
+  if (/^Embed$/i.test(l)) return true;
+  if (/^Direct link$/i.test(l)) return true;
+  if (/^The code has been copied/i.test(l)) return true;
+  if (/^The URL has been copied/i.test(l)) return true;
+  if (/^No media source currently/i.test(l)) return true;
+  if (/^Share$/i.test(l)) return true;
+  // VOA
+  if (/^Download Lesson/i.test(l)) return true;
+  if (/^Your browser doesn/i.test(l)) return true;
+  if (/^Quiz - Lesson/i.test(l)) return true;
+  if (/^\d{1,2}:\d{2}/.test(l)) return true;
+  if (/^Speaking Practice$/i.test(l)) return true;
+  if (/^Pronunciation( Practice)?$/i.test(l)) return true;
+  if (/^Conversation$/i.test(l)) return true;
+  if (/^Learn the alphabet$/i.test(l)) return true;
+  if (/^Listening Quiz$/i.test(l)) return true;
+  if (/^Video$/i.test(l)) return true;
+  if (/^Audio$/i.test(l)) return true;
+  if (/^Follow Us$/i.test(l)) return true;
+  if (/^Related$/i.test(l)) return true;
+  if (/^About Learning English$/i.test(l)) return true;
+  if (/^Advertisement$/i.test(l)) return true;
+  return false;
+}
+
 function extraerTexto(html) {
   try {
     var doc = new DOMParser().parseFromString(html, 'text/html');
-
-    // 1) Eliminar TODOS los nodos basura antes de leer texto
     var basura = doc.querySelectorAll(
       'script, style, noscript, svg, iframe, ' +
       'nav, header, footer, aside, ' +
-      '.nav, .menu, .sidebar, .comments, .comment, ' +
-      '.related, .share, .social, .newsletter, .ad, .ads, .advert, ' +
-      '[class*="banner"], [class*="promo"], [class*="widget"]'
+      '.nav, .menu, .sidebar, .comments, .related, .share, .social, ' +
+      '.newsletter, .ad, .ads, .advert, [class*="banner"], [class*="promo"]'
     );
     for (var k = 0; k < basura.length; k++) {
       if (basura[k].parentNode) basura[k].parentNode.removeChild(basura[k]);
     }
-
-    // 2) Buscar el contenedor del artículo
     var art = doc.querySelector('.wsw') ||
               doc.querySelector('#article-content') ||
               doc.querySelector('.article-content') ||
@@ -55,56 +102,21 @@ function extraerTexto(html) {
               doc.querySelector('article') ||
               doc.querySelector('main') ||
               doc.querySelector('[itemprop="articleBody"]');
-
     var texto = art ? art.innerText : (doc.body ? doc.body.innerText : '');
-
-    // 3) Limpieza línea por línea
     texto = texto.replace(/\r/g, '').split('\n')
       .map(function(l) { return l.trim(); })
-      .filter(function(l) {
-        if (!l) return false;
-        // Líneas de código JS / CSS detectables
-        if (/^(var|let|const|function|if|for|while|window\.|document\.|return)\b/.test(l)) return false;
-        if (/[{};]\s*$/.test(l) && /[=\[\]()]/.test(l)) return false;
-        if (/gtmEventObject|dataLayer|renderGtm|createElement|getElementsByTagName/.test(l)) return false;
-        if (/^\/\*|\*\/$/.test(l)) return false;
-        // Basura común de la web
-        if (/^Download Lesson/i.test(l)) return false;
-        if (/^Your browser doesn/i.test(l)) return false;
-        if (/^Quiz - Lesson/i.test(l)) return false;
-        if (/^\d{1,2}:\d{2}/.test(l)) return false;
-        if (/^Speaking Practice$/i.test(l)) return false;
-        if (/^Pronunciation( Practice)?$/i.test(l)) return false;
-        if (/^Conversation$/i.test(l)) return false;
-        if (/^Learn the alphabet$/i.test(l)) return false;
-        if (/^Listening Quiz$/i.test(l)) return false;
-        if (/^Video$/i.test(l)) return false;
-        if (/^Audio$/i.test(l)) return false;
-        if (/^Follow Us$/i.test(l)) return false;
-        if (/^Related$/i.test(l)) return false;
-        if (/^About Learning English$/i.test(l)) return false;
-        if (/^Share$/i.test(l)) return false;
-        if (/^Advertisement$/i.test(l)) return false;
-        // Líneas sin letras (solo símbolos)
-        if (!/[A-Za-zÁÉÍÓÚÑáéíóúñ]/.test(l)) return false;
-        return true;
-      }).join('\n');
-
+      .filter(function(l) { return !esBasura(l); })
+      .join('\n');
     texto = texto.replace(/\n{3,}/g, '\n\n').trim();
-
-    // 4) Cortar en marcadores de fin
     var cortes = [/\nRelated\s*\n/i, /\nFollow Us\s*\n/i, /\nAbout Learning English\s*\n/i];
     for (var i = 0; i < cortes.length; i++) {
       var m = texto.search(cortes[i]);
       if (m > 200) { texto = texto.slice(0, m).trim(); break; }
     }
-
     return texto;
   } catch (e) { return ''; }
 }
 
-
-// Extrae texto limpio de un fragmento HTML (usado para el texto del RSS)
 function extraerTextoDeHtml(html) {
   try {
     var doc = new DOMParser().parseFromString(html, 'text/html');
@@ -115,16 +127,8 @@ function extraerTextoDeHtml(html) {
     var texto = doc.body ? doc.body.innerText : '';
     texto = texto.replace(/\r/g, '').split('\n')
       .map(function(l) { return l.trim(); })
-      .filter(function(l) {
-        if (!l) return false;
-        if (!/[A-Za-z\u00c0-\u017f]/.test(l)) return false;
-        if (/^Download Lesson/i.test(l)) return false;
-        if (/^Your browser doesn/i.test(l)) return false;
-        if (/^Advertisement$/i.test(l)) return false;
-        if (/^Share$/i.test(l)) return false;
-        if (/^Follow Us$/i.test(l)) return false;
-        return true;
-      }).join('\n');
+      .filter(function(l) { return !esBasura(l); })
+      .join('\n');
     return texto.replace(/\n{3,}/g, '\n\n').trim();
   } catch (e) { return ''; }
 }

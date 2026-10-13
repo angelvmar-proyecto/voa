@@ -164,22 +164,16 @@ async function descargarVOA(tab, i, boton) {
     var base64 = await bajar(mp3Url, false);
     await escribirArchivo(rutas.audio, base64);
 
-    // Texto: primero intentar con el que viene en el RSS
-    var textoFinal = '';
-    if (it.texto_incluido && it.texto_incluido.length > 50) {
-      boton.innerHTML = '<span class="spinner"></span> Texto...';
-      textoFinal = extraerTextoDeHtml(it.texto_incluido);
-    }
-    // Si no hay texto en el RSS, scrapear la pagina
-    if (!textoFinal && it.pagina) {
+    // Texto: SIEMPRE scrapear la pagina
+    if (it.pagina) {
       try {
         boton.innerHTML = '<span class="spinner"></span> Texto...';
         var html = await bajar(it.pagina, true);
-        textoFinal = extraerTexto(html);
+        var textoFinal = extraerTexto(html);
+        if (textoFinal && textoFinal.length > 50) {
+          await escribirArchivo(rutas.texto, textoFinal, 'utf8');
+        }
       } catch (errTxt) { console.log('Sin texto:', errTxt.message); }
-    }
-    if (textoFinal && textoFinal.length > 50) {
-      await escribirArchivo(rutas.texto, textoFinal, 'utf8');
     }
 
     boton.classList.add('guardado');
@@ -235,13 +229,6 @@ async function mostrarTextoVOA(tab, i, boton) {
   boton.disabled = true;
   var texto = await leerTexto(rutas.texto);
 
-  if (!texto && it.texto_incluido && it.texto_incluido.length > 50) {
-    texto = extraerTextoDeHtml(it.texto_incluido);
-    if (texto && texto.length > 50) {
-      await escribirArchivo(rutas.texto, texto, 'utf8');
-      boton.innerHTML = '📖 Texto';
-    }
-  }
   if (!texto && it.pagina) {
     boton.innerHTML = '<span class="spinner"></span> Bajando...';
     try {
