@@ -7,3 +7,4 @@ android/.idea/
 android/captures/
 *.log
 .DS_Store
+fix*.js

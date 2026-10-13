@@ -31,29 +31,23 @@ function setEstado(tab, msg, tipo) {
   el.style.display = msg ? 'block' : 'none';
 }
 
-// --- Filtro mínimo: solo descarta código y navegación obvia ---
 var BASURA_MIN = /^(accessibility links|skip to .+|languages|search|previous|next|menu|subscribe|share|embed|direct link|pop-out player|advertisement|the code has been copied.*|the url has been copied.*|no media source currently available|download lesson.*|your browser doesn.t support html5|\d+\s*kbps.*)$/i;
 
 function esBasuraMin(l) {
   if (!l || l.length < 2) return true;
   if (!/[A-Za-z\u00c0-\u017f]/.test(l)) return true;
   if (BASURA_MIN.test(l)) return true;
-  // Código JS residual
   if (/^(var|let|const|function)\s/.test(l)) return true;
   if (/gtmEventObject|dataLayer|createElement/.test(l)) return true;
   return false;
 }
 
-// === Extractor: solo <p> del contenedor del artículo ===
 function extraerTexto(html) {
   try {
     var doc = new DOMParser().parseFromString(html, 'text/html');
-    // Quitar solo scripts y estilos (no toca el contenido)
     doc.querySelectorAll('script, style, noscript').forEach(function(el) {
       if (el.parentNode) el.parentNode.removeChild(el);
     });
-
-    // Buscar el contenedor del artículo con muchos fallbacks
     var art = doc.querySelector('.wsw') ||
               doc.querySelector('[itemprop="articleBody"]') ||
               doc.querySelector('.article-content') ||
@@ -61,10 +55,7 @@ function extraerTexto(html) {
               doc.querySelector('.wysiwyg') ||
               doc.querySelector('article') ||
               doc.querySelector('main');
-
     if (!art) return '';
-
-    // Recolectar SOLO párrafos y encabezados
     var nodos = art.querySelectorAll('p, h2, h3, h4, h5, blockquote');
     var lineas = [];
     for (var i = 0; i < nodos.length; i++) {
@@ -73,9 +64,7 @@ function extraerTexto(html) {
       if (esBasuraMin(t)) continue;
       lineas.push(t);
     }
-
-    var texto = lineas.join('\n\n').replace(/\n{3,}/g, '\n\n').trim();
-    return texto;
+    return lineas.join('\n\n').replace(/\n{3,}/g, '\n\n').trim();
   } catch (e) { return ''; }
 }
 
