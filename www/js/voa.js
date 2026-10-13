@@ -134,7 +134,7 @@ async function obtenerTextoArticulo(urlPagina, tab) {
   try {
     var jinaUrl = 'https://r.jina.ai/' + urlPagina;
     var md = await bajar(jinaUrl, true);
-    var textoJina = limpiarMarkdownJina(md);
+    var textoJina = limpiarMarkdownJina(md, tituloArticulo);
     if (textoJina && textoJina.length > 200) {
       console.log('[' + tab + '] Texto via jina: ' + textoJina.length + ' chars');
       return textoJina;

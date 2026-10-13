@@ -31,8 +31,7 @@ function setEstado(tab, msg, tipo) {
   el.style.display = msg ? 'block' : 'none';
 }
 
-// ---------- Filtro de basura ----------
-var BASURA_LINEA = /^(accessibility links|skip to .+|languages|search|previous|next|menu|subscribe|embed|direct link|pop-out player|advertisement|share|share this|follow us|see comments|see all episodes|see all|forum|episodes|articles|about|breaking news|download lesson.*|your browser doesn.t support html5|no media source currently available|the code has been copied.*|the url has been copied.*|\d+\s*kbps.*|\d{1,2}:\d{2}.*|start the quiz.*|quiz - .*|related content|related|more from voa|most viewed|watch video|listen to.*|see tv programs|see radio programs|continue reading)$/i;
+var BASURA_LINEA = /^(accessibility links|skip to .+|languages|search|previous|next|menu|subscribe|embed|direct link|pop-out player|advertisement|share|share this|follow us|see comments|see all episodes|see all|forum|episodes|articles|about|breaking news|download lesson.*|your browser doesn.t support html5|no media source currently available|the code has been copied.*|the url has been copied.*|\d+\s*kbps.*|\d{1,2}:\d{2}.*|start the quiz.*|quiz - .*|related content|related|more from voa|most viewed|watch video|listen to.*|see tv programs|see radio programs|continue reading|load more|calendar|latest|tv programs|radio programs)$/i;
 
 function esBasura(l) {
   if (!l || l.length < 3) return true;
@@ -43,7 +42,6 @@ function esBasura(l) {
   return false;
 }
 
-// ---------- Extraer texto del HTML (AMP) ----------
 function extraerTexto(html) {
   try {
     var doc = new DOMParser().parseFromString(html, 'text/html');
@@ -77,13 +75,20 @@ function extraerTextoDeHtml(html) {
   return extraerTexto(html);
 }
 
-// ---------- Limpiar Markdown de r.jina.ai ----------
-function limpiarMarkdownJina(md) {
+function limpiarMarkdownJina(md, tituloArticulo) {
   if (!md) return '';
 
-  // Cortar desde "Markdown Content:" (el cuerpo empieza ahí)
   var idx = md.indexOf('Markdown Content:');
   if (idx >= 0) md = md.slice(idx + 'Markdown Content:'.length);
+
+  // Si tenemos el titulo, cortar desde su primera aparicion
+  if (tituloArticulo) {
+    var limpio = tituloArticulo.replace(/ - [A-Z][a-z]+ \d{1,2}, \d{4}$/, '').trim();
+    var idxTitulo = md.indexOf(limpio);
+    if (idxTitulo >= 0) {
+      md = md.slice(idxTitulo + limpio.length);
+    }
+  }
 
   var lineas = md.split('\n');
   var salida = [];
@@ -93,37 +98,32 @@ function limpiarMarkdownJina(md) {
     var l = (lineas[i] || '').trim();
     if (!l) continue;
 
-    // Saltar imágenes
+    // Saltar imagenes
     if (/^!\[/.test(l)) continue;
-
-    // Saltar bullets que solo son un enlace
+    // Saltar bullets que solo son enlaces
     if (/^[\*\-\+]\s+\[[^\]]+\]\([^)]+\)\s*$/.test(l)) continue;
+    // Saltar lineas que son solo un enlace
+    if (/^\[[^\]]+\]\([^)]+\)\s*$/.test(l)) continue;
+    // Saltar encabezados de navegacion
+    if (/^#{1,6}\s+(Follow Us|Subscribe|About|Articles|Episodes|Forum|Related|More|Share|Languages|Search|Previous|Next|Breaking News|Direct link|Embed|Advertisement|See .*|Skip to .+|TV Programs|Radio Programs|Load more|Calendar|Latest)\s*$/i.test(l)) continue;
+    // Saltar fechas solas
+    if (/^(January|February|March|April|May|June|July|August|September|October|November|December)\s+\d{1,2},\s+\d{4}$/.test(l)) continue;
+    // Saltar duraciones
+    if (/^\d{1,2}:\d{2}(\s+\d{1,2}:\d{2})*$/.test(l)) continue;
+    // Saltar Previous/Next solos
+    if (/^(Previous|Next)\s*$/.test(l)) continue;
+    if (/^Apple Podcasts/.test(l)) continue;
+    if (/^(Subscribe|See TV Programs|See Radio Programs)/i.test(l)) continue;
 
-    // Saltar encabezados de sección basura
-    if (/^#{1,6}\s+(Follow Us|Subscribe|About|Articles|Episodes|Forum|Related|More|Share|Languages|Search|Previous|Next|Breaking News|Direct link|Embed|Advertisement|See .*|Skip to .+)\s*$/i.test(l)) continue;
-
-    // Quitar markdown de encabezados/listas
+    // Quitar markdown
     l = l.replace(/^[#>\*\-\+\s]+/, '');
-
-    // Convertir [texto](url) → texto
     l = l.replace(/\[([^\]]+)\]\([^)]+\)/g, '$1');
-
-    // Quitar imágenes inline
     l = l.replace(/!\[[^\]]*\]\([^)]*\)/g, '');
-
-    // Quitar énfasis markdown
     l = l.replace(/\*\*/g, '').replace(/__/g, '').replace(/`/g, '').trim();
 
-    // Saltar líneas vacías o demasiado cortas
     if (!l || l.length < 3) continue;
-
-    // Saltar basura conocida
     if (esBasura(l)) continue;
-
-    // Saltar líneas que son solo un separador
     if (/^[-=_\s\*]{3,}$/.test(l)) continue;
-
-    // Evitar duplicados consecutivos
     if (vistos[l]) continue;
     vistos[l] = 1;
 
@@ -132,8 +132,7 @@ function limpiarMarkdownJina(md) {
 
   var texto = salida.join('\n\n').replace(/\n{3,}/g, '\n\n').trim();
 
-  // Cortar desde "See comments" o "Episodes" en adelante si quedaron
-  var fin = texto.search(/\n+(See comments|Episodes|Forum|See all episodes)\b/i);
+  var fin = texto.search(/\n+(See comments|Episodes|Forum|See all episodes|Previous|Next)\b/i);
   if (fin > 200) texto = texto.slice(0, fin).trim();
 
   return texto;
