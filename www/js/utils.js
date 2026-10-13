@@ -31,88 +31,117 @@ function setEstado(tab, msg, tipo) {
   el.style.display = msg ? 'block' : 'none';
 }
 
-// Lista negra compartida
+// Etiquetas y clases que SIEMPRE son basura
+var SELECTORES_BASURA = [
+  // Código / estilos
+  'script', 'style', 'noscript', 'svg', 'iframe',
+  // Estructura de página
+  'nav', 'header', 'footer', 'aside',
+  '[role="navigation"]', '[role="banner"]', '[role="contentinfo"]',
+  // Widgets de VOA
+  'figure', 'figcaption',
+  '.wsw__embed', '.wsw__audio', '.wsw__video',
+  '[class*="media-player"]', '[class*="audio-player"]', '[class*="video-player"]',
+  '[class*="podcast"]', '[class*="widget"]', '[class*="embed"]',
+  // Social / compartir
+  '[class*="share"]', '[class*="social"]', '[class*="follow"]',
+  // Publicidad
+  '.ad', '.ads', '.advert', '.advertisement',
+  '[class*="banner"]', '[class*="promo"]', '[class*="sponsor"]',
+  // Navegación secundaria
+  '.sidebar', '.menu', '.nav', '.breadcrumb',
+  '[class*="related"]', '[class*="recommended"]', '[class*="trending"]',
+  '[class*="newsletter"]', '[class*="subscribe"]',
+  '.comments', '.comment'
+].join(', ');
+
+// Frases que NUNCA son contenido del artículo
+var BASURA_EXACTA = /^(accessibility links|skip to .+|languages|search|previous|next|menu|home|about|articles|episodes|subscribe|podcasts?|share|embed|direct link|pop-out player|pop-out|advertisement|download lesson.*|your browser doesn.t support html5|the code has been copied.*|the url has been copied.*|no media source currently available|related|follow us|about learning english|speaking practice|pronunciation( practice)?|conversation|learn the alphabet|listening quiz|video|audio|video programs|audio programs|find us on satellite tv|sign up for our newsletter|our policy about comments|request our content|terms of use.*|contact us|breaking news|science & technology|american history|arts & culture|as it is|ask a teacher|education tips|everyday grammar( tv)?|health & lifestyle|science & technology|u\.s\. history|words & their stories|let.s learn english.*|everyday grammar tv|english in a minute|english @ the movies|news literacy|news words|how to pronounce|america.s national parks|america.s presidents|american stories|voa learning english podcast)$/i;
+
+var BASURA_PATRON = [
+  /^\d+\s*kbps/i,
+  /^share this/i,
+  /^read more/i,
+  /^see more/i,
+  /^most viewed/i,
+  /^most popular/i,
+  /^trending/i,
+  /^photo gallery/i,
+  /^watch video/i,
+  /^listen to/i,
+  /^caption/i,
+  /^image (credit|source)/i,
+  /^\(photo/i,
+  /^ap\s*$/i,
+  /^reuters\s*$/i,
+  /^\d+\s*comments?$/i,
+  /^\[.+\]$/,
+  // Código JS
+  /^(var|let|const|function|if|for|while|window\.|document\.|return)\b/,
+  /gtmEventObject|dataLayer|renderGtm|createElement|getElementsByTagName/,
+  /^\/\*|\*\/$/,
+  // Enlaces residuales
+  /^(click here|here|learn more|more info)$/i
+];
+
 function esBasura(l) {
   if (!l) return true;
+  if (l.length < 3) return true;
+  // Solo símbolos
   if (!/[A-Za-z\u00c0-\u017f]/.test(l)) return true;
-  // Codigo JS / CSS
-  if (/^(var|let|const|function|if|for|while|window\.|document\.|return)\b/.test(l)) return true;
-  if (/gtmEventObject|dataLayer|renderGtm|createElement|getElementsByTagName/.test(l)) return true;
-  if (/[{};]\s*$/.test(l) && /[=\[\]()]/.test(l)) return true;
-  if (/^\/\*|\*\/$/.test(l)) return true;
-  // Navegacion web VOA
-  if (/^Accessibility links$/i.test(l)) return true;
-  if (/^Skip to /i.test(l)) return true;
-  if (/^Languages$/i.test(l)) return true;
-  if (/^Search$/i.test(l)) return true;
-  if (/^Previous$/i.test(l)) return true;
-  if (/^Next$/i.test(l)) return true;
-  if (/^Subscribe$/i.test(l)) return true;
-  if (/^Articles$/i.test(l)) return true;
-  if (/^Episodes$/i.test(l)) return true;
-  if (/^About$/i.test(l)) return true;
-  if (/^Menu$/i.test(l)) return true;
-  if (/^Podcasts?$/i.test(l)) return true;
-  if (/^Breaking News$/i.test(l)) return true;
-  if (/^Science & Technology$/i.test(l)) return true;
-  // Reproductor / share
-  if (/^\d+\s*kbps/i.test(l)) return true;
-  if (/^Pop-out player$/i.test(l)) return true;
-  if (/^Embed$/i.test(l)) return true;
-  if (/^Direct link$/i.test(l)) return true;
-  if (/^The code has been copied/i.test(l)) return true;
-  if (/^The URL has been copied/i.test(l)) return true;
-  if (/^No media source currently/i.test(l)) return true;
-  if (/^Share$/i.test(l)) return true;
-  // VOA
-  if (/^Download Lesson/i.test(l)) return true;
-  if (/^Your browser doesn/i.test(l)) return true;
-  if (/^Quiz - Lesson/i.test(l)) return true;
-  if (/^\d{1,2}:\d{2}/.test(l)) return true;
-  if (/^Speaking Practice$/i.test(l)) return true;
-  if (/^Pronunciation( Practice)?$/i.test(l)) return true;
-  if (/^Conversation$/i.test(l)) return true;
-  if (/^Learn the alphabet$/i.test(l)) return true;
-  if (/^Listening Quiz$/i.test(l)) return true;
-  if (/^Video$/i.test(l)) return true;
-  if (/^Audio$/i.test(l)) return true;
-  if (/^Follow Us$/i.test(l)) return true;
-  if (/^Related$/i.test(l)) return true;
-  if (/^About Learning English$/i.test(l)) return true;
-  if (/^Advertisement$/i.test(l)) return true;
+  // Frase exacta conocida
+  if (BASURA_EXACTA.test(l)) return true;
+  // Patrón
+  for (var i = 0; i < BASURA_PATRON.length; i++) {
+    if (BASURA_PATRON[i].test(l)) return true;
+  }
+  // Línea corta que es un nombre de sección en Title Case
+  if (l.length < 40 && /^[A-Z][a-z]+(\s+[A-Z&][a-z]+){1,4}$/.test(l)) return true;
+  // Línea que es solo un título sin verbo (heurística)
+  if (l.length < 50 && /^(L|Le|Les|The|A|An)\s/.test(l) && l.split(' ').length < 5) return true;
   return false;
 }
 
+// Extrae el texto SOLO de párrafos y encabezados del artículo
 function extraerTexto(html) {
   try {
     var doc = new DOMParser().parseFromString(html, 'text/html');
-    var basura = doc.querySelectorAll(
-      'script, style, noscript, svg, iframe, ' +
-      'nav, header, footer, aside, ' +
-      '.nav, .menu, .sidebar, .comments, .related, .share, .social, ' +
-      '.newsletter, .ad, .ads, .advert, [class*="banner"], [class*="promo"]'
-    );
+
+    // 1. Eliminar toda la basura estructural
+    var basura = doc.querySelectorAll(SELECTORES_BASURA);
     for (var k = 0; k < basura.length; k++) {
       if (basura[k].parentNode) basura[k].parentNode.removeChild(basura[k]);
     }
+
+    // 2. Encontrar el contenedor del artículo
     var art = doc.querySelector('.wsw') ||
+              doc.querySelector('[itemprop="articleBody"]') ||
               doc.querySelector('#article-content') ||
               doc.querySelector('.article-content') ||
               doc.querySelector('.wysiwyg') ||
               doc.querySelector('article') ||
-              doc.querySelector('main') ||
-              doc.querySelector('[itemprop="articleBody"]');
-    var texto = art ? art.innerText : (doc.body ? doc.body.innerText : '');
-    texto = texto.replace(/\r/g, '').split('\n')
-      .map(function(l) { return l.trim(); })
-      .filter(function(l) { return !esBasura(l); })
-      .join('\n');
-    texto = texto.replace(/\n{3,}/g, '\n\n').trim();
-    var cortes = [/\nRelated\s*\n/i, /\nFollow Us\s*\n/i, /\nAbout Learning English\s*\n/i];
-    for (var i = 0; i < cortes.length; i++) {
-      var m = texto.search(cortes[i]);
-      if (m > 200) { texto = texto.slice(0, m).trim(); break; }
+              doc.querySelector('main');
+
+    if (!art) return '';
+
+    // 3. Extraer SOLO de párrafos y encabezados (no divs, no spans)
+    var parrafos = art.querySelectorAll('p, h2, h3, h4, h5, blockquote, li');
+    var lineas = [];
+    for (var i = 0; i < parrafos.length; i++) {
+      var t = (parrafos[i].innerText || '').trim();
+      if (!t) continue;
+      if (esBasura(t)) continue;
+      // Saltar párrafos que solo tienen enlaces sin texto
+      if (/^<a\s/i.test(parrafos[i].innerHTML) && t.length < 30) continue;
+      lineas.push(t);
     }
+
+    var texto = lineas.join('\n\n').replace(/\n{3,}/g, '\n\n').trim();
+
+    // 4. Cortar todo lo que venga después de marcadores finales
+    var fin = texto.search(/\n+(Related content|Related|Follow Us|About Learning English|More From VOA|Most Viewed)\b/i);
+    if (fin > 200) texto = texto.slice(0, fin).trim();
+
     return texto;
   } catch (e) { return ''; }
 }
@@ -120,15 +149,16 @@ function extraerTexto(html) {
 function extraerTextoDeHtml(html) {
   try {
     var doc = new DOMParser().parseFromString(html, 'text/html');
-    var basura = doc.querySelectorAll('script, style, noscript, svg, iframe');
+    var basura = doc.querySelectorAll(SELECTORES_BASURA);
     for (var k = 0; k < basura.length; k++) {
       if (basura[k].parentNode) basura[k].parentNode.removeChild(basura[k]);
     }
-    var texto = doc.body ? doc.body.innerText : '';
-    texto = texto.replace(/\r/g, '').split('\n')
-      .map(function(l) { return l.trim(); })
-      .filter(function(l) { return !esBasura(l); })
-      .join('\n');
-    return texto.replace(/\n{3,}/g, '\n\n').trim();
+    var parrafos = doc.querySelectorAll('p, h2, h3, h4, li, blockquote');
+    var lineas = [];
+    for (var i = 0; i < parrafos.length; i++) {
+      var t = (parrafos[i].innerText || '').trim();
+      if (t && !esBasura(t)) lineas.push(t);
+    }
+    return lineas.join('\n\n').replace(/\n{3,}/g, '\n\n').trim();
   } catch (e) { return ''; }
 }
