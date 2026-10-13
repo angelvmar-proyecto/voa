@@ -31,99 +31,70 @@ function setEstado(tab, msg, tipo) {
   el.style.display = msg ? 'block' : 'none';
 }
 
-// Basura en linea completa
-var BASURA_MIN = /^(accessibility links|skip to .+|languages|search|previous|next|menu|subscribe|share|embed|direct link|pop-out player|advertisement|the code has been copied.*|the url has been copied.*|no media source currently available|download lesson.*|your browser doesn.t support html5|\d+\s*kbps.*|learn the alphabet|listening quiz|speaking practice|pronunciation( practice)?|quiz - .*|start the quiz.*|related|follow us|about learning english|video programs|audio programs|video|audio|more from voa|most viewed)$/i;
-
-function esBasura(l) {
-  if (!l || l.length < 3) return true;
-  if (!/[A-Za-z\u00c0-\u017f]/.test(l)) return true;
-  if (BASURA_MIN.test(l.trim())) return true;
-  if (/^(var|let|const|function|if|for|while|window\.|document\.|return)\b/.test(l)) return true;
-  if (/gtmEventObject|dataLayer|renderGtm|createElement|getElementsByTagName/.test(l)) return true;
-  return false;
-}
-
+// === EXTRACTOR AMP: el que funcionaba la primera vez ===
 function extraerTexto(html) {
   try {
     var doc = new DOMParser().parseFromString(html, 'text/html');
 
-    // 1. Quitar TODA la basura conocida (scripts, embeds, figuras, botones, etc)
-    var eliminar = doc.querySelectorAll(
-      'script, style, noscript, iframe, svg, button, ' +
-      '.wsw__embed, figure, figcaption, ' +
-      '[class*="share"], [class*="social"], [class*="related"], [class*="widget"], ' +
-      '[class*="newsletter"], [class*="promo"], [class*="advert"], ' +
-      '.quiz, .media-block, .media-image, .c-mmp, .c-sticky'
-    );
-    for (var k = 0; k < eliminar.length; k++) {
-      if (eliminar[k].parentNode) eliminar[k].parentNode.removeChild(eliminar[k]);
-    }
+    // Quitar scripts y estilos
+    doc.querySelectorAll('script, style, noscript').forEach(function(el) {
+      if (el.parentNode) el.parentNode.removeChild(el);
+    });
 
-    // 2. Encontrar el contenedor del articulo
-    var art = doc.querySelector('#article-content') ||
-              doc.querySelector('.wsw') ||
+    // Buscar el contenedor del articulo
+    var art = doc.querySelector('.wsw') ||
+              doc.querySelector('#article-content') ||
               doc.querySelector('article') ||
-              doc.querySelector('main') ||
-              doc.body;
+              doc.querySelector('main');
+
     if (!art) return '';
 
-    // 3. Recorrer en ORDEN de aparicion
-    var lineas = [];
-    var vistos = {};
-    var walker = doc.createTreeWalker(art, NodeFilter.SHOW_ELEMENT, null, false);
-    var node = walker.currentNode;
+    // Extraer texto plano
+    var texto = art.innerText || '';
 
-    while (node) {
-      if (node.nodeType === 1) {
-        var tag = node.tagName;
-        var clase = (node.className || '').toString().trim();
-        var id = node.id || '';
+    // Limpieza linea por linea
+    texto = texto.replace(/\r/g, '').split('\n')
+      .map(function(l) { return l.trim(); })
+      .filter(function(l) {
+        if (!l) return false;
+        if (l.length < 3) return false;
+        if (!/[A-Za-z\u00c0-\u017f]/.test(l)) return false;
+        if (/^Download Lesson/i.test(l)) return false;
+        if (/^Your browser doesn/i.test(l)) return false;
+        if (/^\d+\s*kbps/i.test(l)) return false;
+        if (/^Pop-out player$/i.test(l)) return false;
+        if (/^Direct link$/i.test(l)) return false;
+        if (/^Embed$/i.test(l)) return false;
+        if (/^No media source currently available$/i.test(l)) return false;
+        if (/^The code has been copied/i.test(l)) return false;
+        if (/^The URL has been copied/i.test(l)) return false;
+        if (/^Accessibility links$/i.test(l)) return false;
+        if (/^Skip to /i.test(l)) return false;
+        if (/^Learn the alphabet$/i.test(l)) return false;
+        if (/^Listening Quiz$/i.test(l)) return false;
+        if (/^Speaking Practice$/i.test(l)) return false;
+        if (/^Pronunciation( Practice)?$/i.test(l)) return false;
+        if (/^Conversation$/i.test(l)) return false;
+        if (/^Start the Quiz/i.test(l)) return false;
+        if (/^Quiz - /i.test(l)) return false;
+        if (/^Advertisement$/i.test(l)) return false;
+        return true;
+      })
+      .join('\n');
 
-        // Aceptar: <div> SIN clase y SIN id, <p> SIN clase, <h2>/<h3> con clase wsw__h2/h3
-        var aceptar = false;
-        if (tag === 'DIV' && !clase && !id) aceptar = true;
-        if (tag === 'P' && !clase) aceptar = true;
-        if ((tag === 'H2' || tag === 'H3') && /wsw__h2|wsw__h3/.test(clase)) aceptar = true;
+    texto = texto.replace(/\n{3,}/g, '\n\n').trim();
 
-        if (aceptar) {
-          // Saltar si contiene otros nodos aceptables (para no duplicar)
-          var tieneHijos = node.querySelector('p:not([class]), div:not([class]):not([id])');
-          if (!tieneHijos) {
-            var t = (node.innerText || '').trim();
-            if (t && t.length >= 3 && !esBasura(t) && !vistos[t]) {
-              vistos[t] = 1;
-              lineas.push(t);
-            }
-          }
-        }
-      }
-      node = walker.nextNode();
+    // Cortar desde "Related" en adelante
+    var cortes = [/\nRelated\s*\n/i, /\nFollow Us\s*\n/i, /\nAbout Learning English\s*\n/i];
+    for (var i = 0; i < cortes.length; i++) {
+      var m = texto.search(cortes[i]);
+      if (m > 100) { texto = texto.slice(0, m).trim(); break; }
     }
 
-    return lineas.join('\n\n').replace(/\n{3,}/g, '\n\n').trim();
-  } catch (e) {
-    console.error('Error extraerTexto:', e);
-    return '';
-  }
+    return texto;
+  } catch (e) { return ''; }
 }
 
 function extraerTextoDeHtml(html) {
-  try {
-    var doc = new DOMParser().parseFromString(html, 'text/html');
-    var basura = doc.querySelectorAll('script, style, noscript, iframe, svg');
-    for (var k = 0; k < basura.length; k++) {
-      if (basura[k].parentNode) basura[k].parentNode.removeChild(basura[k]);
-    }
-    var nodos = doc.querySelectorAll('p, h2, h3, h4, li, blockquote, div:not([class]):not([id])');
-    var lineas = [];
-    var vistos = {};
-    for (var i = 0; i < nodos.length; i++) {
-      var t = (nodos[i].innerText || '').trim();
-      if (t && t.length >= 3 && !esBasura(t) && !vistos[t]) {
-        vistos[t] = 1;
-        lineas.push(t);
-      }
-    }
-    return lineas.join('\n\n').replace(/\n{3,}/g, '\n\n').trim();
-  } catch (e) { return ''; }
+  return extraerTexto(html);
 }

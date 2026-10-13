@@ -34,31 +34,19 @@ function parsearRSS(xml) {
               it.match(/(https?:\/\/[^\s"'<>\\]+\.mp3)/i);
     var link = it.match(/<link>([\s\S]*?)<\/link>/);
     var pub = it.match(/<pubDate>([\s\S]*?)<\/pubDate>/);
-
-    // Texto del articulo incluido en el RSS
-    var contenido = '';
-    var m1 = it.match(/<content:encoded>([\s\S]*?)<\/content:encoded>/);
-    if (m1) contenido = m1[1];
-    else {
-      var m2 = it.match(/<description>([\s\S]*?)<\/description>/);
-      if (m2) contenido = m2[1];
-    }
-    contenido = limpiar(contenido);
-
     if (!t || !mp3) return null;
     return {
       titulo: limpiar(t[1]),
       mp3: limpiar(mp3[1].replace(/\\\//g, '/')),
       pagina: link ? limpiar(link[1]) : null,
-      fecha: pub ? limpiar(pub[1]) : '',
-      texto_incluido: contenido
+      fecha: pub ? limpiar(pub[1]) : ''
     };
   }).filter(Boolean);
 }
 
 async function actualizarBiblioteca(tab) {
   var boton = document.querySelector('#contenido-' + tab + ' .barra button');
-  if (boton) { boton.disabled = true; }
+  if (boton) boton.disabled = true;
   var textoOriginal = boton ? boton.innerHTML : '';
   if (boton) boton.innerHTML = '<span class="spinner"></span> Cargando...';
   setEstado(tab, '📡 Descargando lista...');
@@ -98,12 +86,33 @@ async function borrarBiblioteca(tab) {
   if (lista) lista.innerHTML = '<div class="vacio">Biblioteca borrada.</div>';
 }
 
+async function borrarTextos(tab) {
+  if (!confirm('¿Borrar TODOS los textos de ' + tab + '?')) return;
+  var items = await leerJSON('biblioteca_' + tab + '.json');
+  if (!items || !items.length) { alert('No hay nada que borrar.'); return; }
+  var borrados = 0;
+  for (var i = 0; i < items.length; i++) {
+    var rutas = rutasPara(tab, items[i].titulo);
+    try {
+      await Filesystem.deleteFile({ path: rutas.texto, directory: Directory.External, recursive: true });
+      borrados++;
+    } catch (e) {}
+  }
+  await cargarVista(tab);
+  setEstado(tab, '✅ ' + borrados + ' textos borrados.', 'ok');
+}
+
 function rutasPara(tab, titulo) {
   var slug = slugify(titulo);
   return {
     audio: CARPETA_AUDIOS + tab + '_' + slug + '.mp3',
     texto: CARPETA_TEXTOS + tab + '_' + slug + '.txt'
   };
+}
+
+// Convertir URL normal a AMP
+function aAmp(url) {
+  return url.replace('learningenglish.voanews.com/a/', 'learningenglish.voanews.com/amp/');
 }
 
 async function cargarVista(tab) {
@@ -151,12 +160,8 @@ async function descargarVOA(tab, i, boton) {
   try {
     var mp3Url = it.mp3;
     if (!mp3Url && it.pagina) {
-      boton.innerHTML = '<span class="spinner"></span> Buscando audio...';
-      var htmlLeccion = await bajar(it.pagina, true);
-      var mp3Match = htmlLeccion.match(/<audio[^>]+src=["']([^"']+\.mp3[^"']*)["']/i) ||
-                     htmlLeccion.match(/<source[^>]+src=["']([^"']+\.mp3[^"']*)["']/i) ||
-                     htmlLeccion.match(/href=["']([^"']+\.mp3[^"']*)["']/i) ||
-                     htmlLeccion.match(/(https?:\/\/[^\s"'<>\\]+\.mp3)/i);
+      var htmlLeccion = await bajar(aAmp(it.pagina), true);
+      var mp3Match = htmlLeccion.match(/(https?:\/\/[^\s"'<>\\]+\.mp3)/i);
       if (!mp3Match) throw new Error('No se encontró MP3');
       mp3Url = mp3Match[1].replace(/\\\//g, '/');
     }
@@ -164,14 +169,14 @@ async function descargarVOA(tab, i, boton) {
     var base64 = await bajar(mp3Url, false);
     await escribirArchivo(rutas.audio, base64);
 
-    // Texto: SIEMPRE scrapear la pagina
     if (it.pagina) {
       try {
         boton.innerHTML = '<span class="spinner"></span> Texto...';
-        var html = await bajar(it.pagina, true);
-        var textoFinal = extraerTexto(html);
-        if (textoFinal && textoFinal.length > 50) {
-          await escribirArchivo(rutas.texto, textoFinal, 'utf8');
+        // Usar version AMP (trae el texto estatico)
+        var html = await bajar(aAmp(it.pagina), true);
+        var texto = extraerTexto(html);
+        if (texto && texto.length > 50) {
+          await escribirArchivo(rutas.texto, texto, 'utf8');
         }
       } catch (errTxt) { console.log('Sin texto:', errTxt.message); }
     }
@@ -205,9 +210,7 @@ async function reproducirVOA(tab, i, boton) {
       src = 'data:audio/mpeg;base64,' + r.data;
     } else {
       src = it.mp3;
-      if (!src && it.pagina) {
-        throw new Error('Descarga el audio primero');
-      }
+      if (!src) throw new Error('Descarga el audio primero');
     }
     cont.innerHTML = '<audio controls autoplay src="' + src + '"></audio>';
     boton.innerHTML = '⏸️ Ocultar';
@@ -232,50 +235,16 @@ async function mostrarTextoVOA(tab, i, boton) {
   if (!texto && it.pagina) {
     boton.innerHTML = '<span class="spinner"></span> Bajando...';
     try {
-      var htmlT = await bajar(it.pagina, true);
-      texto = extraerTexto(htmlT);
+      var html = await bajar(aAmp(it.pagina), true);
+      texto = extraerTexto(html);
       if (texto && texto.length > 50) {
         await escribirArchivo(rutas.texto, texto, 'utf8');
-        boton.innerHTML = '📖 Texto';
       }
     } catch (err) { texto = 'Error: ' + err.message; }
   }
 
+  boton.innerHTML = texto ? '📖 Texto' : '📄 Bajar txt';
   if (texto) cont.innerHTML = '<div class="texto-box">' + escapeHtml(texto) + '</div>';
   else cont.innerHTML = '<div class="texto-box">No hay texto.</div>';
   boton.disabled = false;
-}
-
-
-async function borrarTextos(tab) {
-  if (!confirm('¿Borrar TODOS los textos de ' + tab + ' para volver a generarlos?')) return;
-  var items = await leerJSON('biblioteca_' + tab + '.json');
-  if (!items || !items.length) { alert('No hay nada que borrar.'); return; }
-  var borrados = 0, errores = 0;
-  for (var i = 0; i < items.length; i++) {
-    var rutas = rutasPara(tab, items[i].titulo);
-    try {
-      await Filesystem.deleteFile({ path: rutas.texto, directory: Directory.External });
-      borrados++;
-    } catch (e) { errores++; }
-  }
-  await cargarVista(tab);
-  alert('Textos borrados: ' + borrados + (errores ? ' (no existian: ' + errores + ')' : ''));
-  setEstado(tab, '✅ ' + borrados + ' textos borrados. Toca "📄 Bajar txt" para regenerarlos.', 'ok');
-}
-
-async function borrarAudios(tab) {
-  if (!confirm('¿Borrar TODOS los audios de ' + tab + '?')) return;
-  var items = await leerJSON('biblioteca_' + tab + '.json');
-  if (!items || !items.length) { alert('No hay nada que borrar.'); return; }
-  var borrados = 0;
-  for (var i = 0; i < items.length; i++) {
-    var rutas = rutasPara(tab, items[i].titulo);
-    try {
-      await Filesystem.deleteFile({ path: rutas.audio, directory: Directory.External });
-      borrados++;
-    } catch (e) {}
-  }
-  await cargarVista(tab);
-  alert('Audios borrados: ' + borrados);
 }
