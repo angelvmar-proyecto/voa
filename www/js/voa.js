@@ -110,31 +110,46 @@ function rutasPara(tab, titulo) {
   };
 }
 
-// Convertir URL normal a AMP
 function aAmp(url) {
   return url.replace('learningenglish.voanews.com/a/', 'learningenglish.voanews.com/amp/');
 }
 
-async function obtenerHtmlArticulo(url) {
-  // Intentar AMP primero
+// =================================================================
+// OBTENER TEXTO: AMP primero, r.jina.ai como respaldo
+// =================================================================
+async function obtenerTextoArticulo(urlPagina, tab) {
+  // 1) Intentar AMP (funciona perfecto en Let's Learn)
   try {
-    var amp = aAmp(url);
-    var html = await bajar(amp, true);
-    if (html && html.length > 5000 && /<body/i.test(html)) {
-      return html;
+    var html = await bajar(aAmp(urlPagina), true);
+    var textoAmp = extraerTexto(html);
+    if (textoAmp && textoAmp.length > 200) {
+      console.log('[' + tab + '] Texto via AMP: ' + textoAmp.length + ' chars');
+      return textoAmp;
     }
   } catch (e) {
-    console.log('AMP falló:', e.message);
+    console.log('[' + tab + '] AMP falló:', e.message);
   }
-  // Fallback: URL normal
+
+  // 2) Respaldo: r.jina.ai (ejecuta JS en el servidor)
   try {
-    return await bajar(url, true);
+    var jinaUrl = 'https://r.jina.ai/' + urlPagina;
+    var md = await bajar(jinaUrl, true);
+    var textoJina = limpiarMarkdownJina(md);
+    if (textoJina && textoJina.length > 200) {
+      console.log('[' + tab + '] Texto via jina: ' + textoJina.length + ' chars');
+      return textoJina;
+    }
+    console.log('[' + tab + '] jina devolvió poco texto: ' + (textoJina || '').length);
   } catch (e) {
-    console.log('URL normal falló:', e.message);
-    return '';
+    console.log('[' + tab + '] jina falló:', e.message);
   }
+
+  return '';
 }
 
+// =================================================================
+// VISTA
+// =================================================================
 async function cargarVista(tab) {
   var lista = document.getElementById('lista-' + tab);
   if (!lista) return;
@@ -178,27 +193,29 @@ async function descargarVOA(tab, i, boton) {
   boton.innerHTML = '<span class="spinner"></span> Bajando...';
 
   try {
+    // Audio
     var mp3Url = it.mp3;
     if (!mp3Url && it.pagina) {
+      boton.innerHTML = '<span class="spinner"></span> Buscando audio...';
       var htmlLeccion = await bajar(aAmp(it.pagina), true);
       var mp3Match = htmlLeccion.match(/(https?:\/\/[^\s"'<>\\]+\.mp3)/i);
       if (!mp3Match) throw new Error('No se encontró MP3');
       mp3Url = mp3Match[1].replace(/\\\//g, '/');
     }
-
     var base64 = await bajar(mp3Url, false);
     await escribirArchivo(rutas.audio, base64);
 
+    // Texto
     if (it.pagina) {
       try {
         boton.innerHTML = '<span class="spinner"></span> Texto...';
-        // Usar version AMP (trae el texto estatico)
-        var html = await obtenerHtmlArticulo(it.pagina);
-        var texto = extraerTexto(html);
+        var texto = await obtenerTextoArticulo(it.pagina, tab);
         if (texto && texto.length > 50) {
           await escribirArchivo(rutas.texto, texto, 'utf8');
         }
-      } catch (errTxt) { console.log('Sin texto:', errTxt.message); }
+      } catch (errTxt) {
+        console.log('Sin texto:', errTxt.message);
+      }
     }
 
     boton.classList.add('guardado');
@@ -255,8 +272,7 @@ async function mostrarTextoVOA(tab, i, boton) {
   if (!texto && it.pagina) {
     boton.innerHTML = '<span class="spinner"></span> Bajando...';
     try {
-      var html = await obtenerHtmlArticulo(it.pagina);
-      texto = extraerTexto(html);
+      texto = await obtenerTextoArticulo(it.pagina, tab);
       if (texto && texto.length > 50) {
         await escribirArchivo(rutas.texto, texto, 'utf8');
       }
