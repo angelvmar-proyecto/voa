@@ -31,57 +31,58 @@ function setEstado(tab, msg, tipo) {
   el.style.display = msg ? 'block' : 'none';
 }
 
-var BASURA_MIN = /^(accessibility links|skip to .+|languages|search|previous|next|menu|subscribe|share|embed|direct link|pop-out player|advertisement|the code has been copied.*|the url has been copied.*|no media source currently available|download lesson.*|your browser doesn.t support html5|\d+\s*kbps.*)$/i;
-
-function esBasuraMin(l) {
-  if (!l || l.length < 2) return true;
-  if (!/[A-Za-z\u00c0-\u017f]/.test(l)) return true;
-  if (BASURA_MIN.test(l)) return true;
-  if (/^(var|let|const|function)\s/.test(l)) return true;
-  if (/gtmEventObject|dataLayer|createElement/.test(l)) return true;
-  return false;
-}
-
+// Función de extracción definitiva, copiando el método de VOA
 function extraerTexto(html) {
   try {
     var doc = new DOMParser().parseFromString(html, 'text/html');
-    doc.querySelectorAll('script, style, noscript').forEach(function(el) {
-      if (el.parentNode) el.parentNode.removeChild(el);
-    });
-    var art = doc.querySelector('.wsw') ||
-              doc.querySelector('[itemprop="articleBody"]') ||
-              doc.querySelector('.article-content') ||
-              doc.querySelector('#article-content') ||
-              doc.querySelector('.wysiwyg') ||
-              doc.querySelector('article') ||
-              doc.querySelector('main');
-    if (!art) return '';
-    var nodos = art.querySelectorAll('p, h2, h3, h4, h5, blockquote');
-    var lineas = [];
-    for (var i = 0; i < nodos.length; i++) {
-      var t = (nodos[i].innerText || '').trim();
-      if (!t) continue;
-      if (esBasuraMin(t)) continue;
-      lineas.push(t);
+
+    // Usamos el selector exacto de VOA para encontrar el contenido del artículo.
+    // Se busca dentro de '#article-content' el contenedor 'div.wsw' y de ahí se toman los párrafos.
+    var articulo = doc.querySelector('#article-content > div.wsw');
+
+    // Fallback por si la estructura cambia ligeramente.
+    if (!articulo) {
+      articulo = doc.querySelector('div.wsw');
     }
-    return lineas.join('\n\n').replace(/\n{3,}/g, '\n\n').trim();
-  } catch (e) { return ''; }
+
+    // Si no se encuentra ninguno de los dos, no hay nada que extraer.
+    if (!articulo) {
+      console.error('No se encontró el contenedor del artículo (.wsw)');
+      return '';
+    }
+
+    // Recolectamos solo los párrafos <p> dentro del contenedor encontrado.
+    var parrafos = articulo.querySelectorAll('p');
+    var lineas = [];
+    for (var i = 0; i < parrafos.length; i++) {
+      var t = (parrafos[i].innerText || '').trim();
+      // Filtro mínimo para evitar líneas vacías o botones de "Download".
+      if (t && t.length > 3 && !/^Download Lesson/i.test(t)) {
+        lineas.push(t);
+      }
+    }
+
+    // Unimos los párrafos con doble salto de línea.
+    return lineas.join('\n\n').trim();
+
+  } catch (e) {
+    console.error('Error en extraerTexto:', e);
+    return '';
+  }
 }
 
+// Mantenemos esta función para el texto que viene del RSS (que es HTML limpio).
 function extraerTextoDeHtml(html) {
   try {
     var doc = new DOMParser().parseFromString(html, 'text/html');
-    doc.querySelectorAll('script, style, noscript').forEach(function(el) {
-      if (el.parentNode) el.parentNode.removeChild(el);
-    });
-    var nodos = doc.querySelectorAll('p, h2, h3, h4, blockquote');
+    var parrafos = doc.querySelectorAll('p');
     var lineas = [];
-    for (var i = 0; i < nodos.length; i++) {
-      var t = (nodos[i].innerText || '').trim();
-      if (!t) continue;
-      if (esBasuraMin(t)) continue;
-      lineas.push(t);
+    for (var i = 0; i < parrafos.length; i++) {
+      var t = (parrafos[i].innerText || '').trim();
+      if (t && t.length > 3) {
+        lineas.push(t);
+      }
     }
-    return lineas.join('\n\n').replace(/\n{3,}/g, '\n\n').trim();
+    return lineas.join('\n\n').trim();
   } catch (e) { return ''; }
 }
