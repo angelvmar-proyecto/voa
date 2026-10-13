@@ -75,6 +75,10 @@ function extraerTexto(html) {
         if (/^Speaking Practice$/i.test(l)) return false;
         if (/^Pronunciation( Practice)?$/i.test(l)) return false;
         if (/^Conversation$/i.test(l)) return false;
+        if (/^Speaking Practice/i.test(l)) return false;
+        if (/^Pronunciation Practice/i.test(l)) return false;
+        if (/^Let.s Learn English/i.test(l)) return false;
+        if (/^Lesson d+s*[-–:]s*/i.test(l)) return false;
         if (/^Start the Quiz/i.test(l)) return false;
         if (/^Quiz - /i.test(l)) return false;
         if (/^Advertisement$/i.test(l)) return false;
