@@ -31,58 +31,99 @@ function setEstado(tab, msg, tipo) {
   el.style.display = msg ? 'block' : 'none';
 }
 
-// Función de extracción definitiva, copiando el método de VOA
+// Basura en linea completa
+var BASURA_MIN = /^(accessibility links|skip to .+|languages|search|previous|next|menu|subscribe|share|embed|direct link|pop-out player|advertisement|the code has been copied.*|the url has been copied.*|no media source currently available|download lesson.*|your browser doesn.t support html5|\d+\s*kbps.*|learn the alphabet|listening quiz|speaking practice|pronunciation( practice)?|quiz - .*|start the quiz.*|related|follow us|about learning english|video programs|audio programs|video|audio|more from voa|most viewed)$/i;
+
+function esBasura(l) {
+  if (!l || l.length < 3) return true;
+  if (!/[A-Za-z\u00c0-\u017f]/.test(l)) return true;
+  if (BASURA_MIN.test(l.trim())) return true;
+  if (/^(var|let|const|function|if|for|while|window\.|document\.|return)\b/.test(l)) return true;
+  if (/gtmEventObject|dataLayer|renderGtm|createElement|getElementsByTagName/.test(l)) return true;
+  return false;
+}
+
 function extraerTexto(html) {
   try {
     var doc = new DOMParser().parseFromString(html, 'text/html');
 
-    // Usamos el selector exacto de VOA para encontrar el contenido del artículo.
-    // Se busca dentro de '#article-content' el contenedor 'div.wsw' y de ahí se toman los párrafos.
-    var articulo = doc.querySelector('#article-content > div.wsw');
-
-    // Fallback por si la estructura cambia ligeramente.
-    if (!articulo) {
-      articulo = doc.querySelector('div.wsw');
+    // 1. Quitar TODA la basura conocida (scripts, embeds, figuras, botones, etc)
+    var eliminar = doc.querySelectorAll(
+      'script, style, noscript, iframe, svg, button, ' +
+      '.wsw__embed, figure, figcaption, ' +
+      '[class*="share"], [class*="social"], [class*="related"], [class*="widget"], ' +
+      '[class*="newsletter"], [class*="promo"], [class*="advert"], ' +
+      '.quiz, .media-block, .media-image, .c-mmp, .c-sticky'
+    );
+    for (var k = 0; k < eliminar.length; k++) {
+      if (eliminar[k].parentNode) eliminar[k].parentNode.removeChild(eliminar[k]);
     }
 
-    // Si no se encuentra ninguno de los dos, no hay nada que extraer.
-    if (!articulo) {
-      console.error('No se encontró el contenedor del artículo (.wsw)');
-      return '';
-    }
+    // 2. Encontrar el contenedor del articulo
+    var art = doc.querySelector('#article-content') ||
+              doc.querySelector('.wsw') ||
+              doc.querySelector('article') ||
+              doc.querySelector('main') ||
+              doc.body;
+    if (!art) return '';
 
-    // Recolectamos solo los párrafos <p> dentro del contenedor encontrado.
-    var parrafos = articulo.querySelectorAll('p');
+    // 3. Recorrer en ORDEN de aparicion
     var lineas = [];
-    for (var i = 0; i < parrafos.length; i++) {
-      var t = (parrafos[i].innerText || '').trim();
-      // Filtro mínimo para evitar líneas vacías o botones de "Download".
-      if (t && t.length > 3 && !/^Download Lesson/i.test(t)) {
-        lineas.push(t);
+    var vistos = {};
+    var walker = doc.createTreeWalker(art, NodeFilter.SHOW_ELEMENT, null, false);
+    var node = walker.currentNode;
+
+    while (node) {
+      if (node.nodeType === 1) {
+        var tag = node.tagName;
+        var clase = (node.className || '').toString().trim();
+        var id = node.id || '';
+
+        // Aceptar: <div> SIN clase y SIN id, <p> SIN clase, <h2>/<h3> con clase wsw__h2/h3
+        var aceptar = false;
+        if (tag === 'DIV' && !clase && !id) aceptar = true;
+        if (tag === 'P' && !clase) aceptar = true;
+        if ((tag === 'H2' || tag === 'H3') && /wsw__h2|wsw__h3/.test(clase)) aceptar = true;
+
+        if (aceptar) {
+          // Saltar si contiene otros nodos aceptables (para no duplicar)
+          var tieneHijos = node.querySelector('p:not([class]), div:not([class]):not([id])');
+          if (!tieneHijos) {
+            var t = (node.innerText || '').trim();
+            if (t && t.length >= 3 && !esBasura(t) && !vistos[t]) {
+              vistos[t] = 1;
+              lineas.push(t);
+            }
+          }
+        }
       }
+      node = walker.nextNode();
     }
 
-    // Unimos los párrafos con doble salto de línea.
-    return lineas.join('\n\n').trim();
-
+    return lineas.join('\n\n').replace(/\n{3,}/g, '\n\n').trim();
   } catch (e) {
-    console.error('Error en extraerTexto:', e);
+    console.error('Error extraerTexto:', e);
     return '';
   }
 }
 
-// Mantenemos esta función para el texto que viene del RSS (que es HTML limpio).
 function extraerTextoDeHtml(html) {
   try {
     var doc = new DOMParser().parseFromString(html, 'text/html');
-    var parrafos = doc.querySelectorAll('p');
+    var basura = doc.querySelectorAll('script, style, noscript, iframe, svg');
+    for (var k = 0; k < basura.length; k++) {
+      if (basura[k].parentNode) basura[k].parentNode.removeChild(basura[k]);
+    }
+    var nodos = doc.querySelectorAll('p, h2, h3, h4, li, blockquote, div:not([class]):not([id])');
     var lineas = [];
-    for (var i = 0; i < parrafos.length; i++) {
-      var t = (parrafos[i].innerText || '').trim();
-      if (t && t.length > 3) {
+    var vistos = {};
+    for (var i = 0; i < nodos.length; i++) {
+      var t = (nodos[i].innerText || '').trim();
+      if (t && t.length >= 3 && !esBasura(t) && !vistos[t]) {
+        vistos[t] = 1;
         lineas.push(t);
       }
     }
-    return lineas.join('\n\n').trim();
+    return lineas.join('\n\n').replace(/\n{3,}/g, '\n\n').trim();
   } catch (e) { return ''; }
 }
