@@ -54,3 +54,4 @@ footer { position: fixed; bottom: 0; left: 0; right: 0; background: #1e293b;
          line-height: 1.4; }
 footer a { color: #93c5fd; text-decoration: none; }
 footer .marca { color: #fbbf24; font-weight: 700; }
+.item .abrir { background: #0891b2; color: #fff; }

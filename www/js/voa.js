@@ -295,3 +295,23 @@ async function mostrarTextoVOA(tab, i, boton) {
   else cont.innerHTML = '<div class="texto-box">No hay texto.</div>';
   boton.disabled = false;
 }
+
+
+async function abrirEnNavegador(tab, i) {
+  var items = await leerJSON('biblioteca_' + tab + '.json');
+  if (!items || !items[i]) return;
+  var url = items[i].pagina;
+  if (!url) return;
+  log('Abriendo en navegador: ' + url);
+  try {
+    if (window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.Browser) {
+      await window.Capacitor.Plugins.Browser.open({ url: url });
+    } else {
+      window.open(url, '_system');
+    }
+  } catch (e) {
+    log('Error abriendo navegador: ' + e.message);
+    // Fallback: intentar abrir con window.open
+    window.open(url, '_blank');
+  }
+}

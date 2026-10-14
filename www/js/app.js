@@ -17,6 +17,8 @@ document.addEventListener('click', async function(e) {
     await reproducirVOA(boton.dataset.tab, parseInt(boton.dataset.i, 10), boton);
   } else if (boton.classList.contains('texto')) {
     await mostrarTextoVOA(boton.dataset.tab, parseInt(boton.dataset.i, 10), boton);
+  } else if (boton.classList.contains('abrir')) {
+    await abrirEnNavegador(boton.dataset.tab, parseInt(boton.dataset.i, 10));
   } else if (boton.classList.contains('play-local')) {
     await reproducirLocal(parseInt(boton.dataset.i, 10), boton);
   } else if (boton.classList.contains('texto-local')) {
