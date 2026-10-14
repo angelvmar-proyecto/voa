@@ -37,3 +37,25 @@ async function pedirPermisosAlmacenamiento() {
 document.addEventListener('DOMContentLoaded', function() {
   setTimeout(pedirPermisosAlmacenamiento, 1000);
 });
+
+
+async function abrirAjustesPermisos() {
+  try {
+    if (window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.NativeSettings) {
+      await window.Capacitor.Plugins.NativeSettings.openAndroid({
+        option: 'application_details'
+      });
+      return;
+    }
+  } catch (e) {
+    console.log('NativeSettings fallo: ' + e.message);
+  }
+  
+  // Fallback: intentar abrir ajustes con intent
+  try {
+    var intent = 'intent://#Intent;action=android.settings.MANAGE_ALL_FILES_ACCESS_PERMISSION;end';
+    window.location.href = intent;
+  } catch (e2) {
+    alert('Ve manualmente a:\nAjustes > Aplicaciones > Mi Inglés VOA > Permisos > Archivos y medios');
+  }
+}
