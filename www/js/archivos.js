@@ -13,7 +13,7 @@ function getCapacitorHttp() {
   var p = (window.Capacitor && window.Capacitor.Plugins) || {};
   return p.CapacitorHttp;
 }
-var Directory = { Data: 'DATA', Documents: 'DOCUMENTS', Cache: 'CACHE', External: 'EXTERNAL' };
+var Directory = { Data: 'DATA', Documents: 'DOCUMENTS', Cache: 'CACHE', External: 'EXTERNAL', ExternalStorage: 'EXTERNAL_STORAGE' };
 
 async function guardarJSON(nombre, datos) {
   await getFilesystem().writeFile({
