@@ -27,4 +27,4 @@ document.addEventListener('click', async function(e) {
 });
 
 cargarVista('lecciones');
-cargarVista('entrevistas');
+cargarVista('words');

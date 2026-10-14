@@ -19,29 +19,17 @@ function formatearFecha(s) {
   } catch (e) { return ''; }
 }
 
-// Decodifica entidades HTML (&apos; &amp; &quot; &#39; etc)
 function decodificarEntidades(s) {
   if (!s) return '';
   return String(s)
     .replace(/<!\[CDATA\[|\]\]>/g, '')
-    .replace(/&apos;/g, "'")
-    .replace(/&#0?39;/g, "'")
-    .replace(/&quot;/g, '"')
-    .replace(/&#0?34;/g, '"')
-    .replace(/&amp;/g, '&')
-    .replace(/&lt;/g, '<')
-    .replace(/&gt;/g, '>')
+    .replace(/&apos;/g, "'").replace(/&#0?39;/g, "'")
+    .replace(/&quot;/g, '"').replace(/&#0?34;/g, '"')
+    .replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>')
     .replace(/&nbsp;/g, ' ')
-    .replace(/&mdash;/g, '—')
-    .replace(/&ndash;/g, '–')
-    .replace(/&hellip;/g, '…')
-    .replace(/&#x27;/g, "'")
-    .replace(/&#x2F;/g, '/')
+    .replace(/&mdash;/g, '—').replace(/&ndash;/g, '–').replace(/&hellip;/g, '…')
+    .replace(/&#x27;/g, "'").replace(/&#x2F;/g, '/')
     .trim();
-}
-
-function limpiar(s) {
-  return decodificarEntidades(s);
 }
 
 function setEstado(tab, msg, tipo) {
@@ -52,17 +40,7 @@ function setEstado(tab, msg, tipo) {
   el.style.display = msg ? 'block' : 'none';
 }
 
-var BASURA_LINEA = /^(accessibility links|skip to .+|languages|search|previous|next|menu|subscribe|embed|direct link|pop-out player|advertisement|share|share this|follow us|see comments|see all episodes|see all|forum|episodes|articles|about|breaking news|download lesson.*|your browser doesn.t support html5|no media source currently available|the code has been copied.*|the url has been copied.*|\d+\s*kbps.*|\d{1,2}:\d{2}.*|start the quiz.*|quiz - .*|related content|related|more from voa|most viewed|watch video|listen to.*|see tv programs|see radio programs|continue reading|load more|calendar|latest|tv programs|radio programs)$/i;
-
-function esBasura(l) {
-  if (!l || l.length < 3) return true;
-  if (!/[A-Za-z\u00c0-\u017f]/.test(l)) return true;
-  if (BASURA_LINEA.test(l.trim())) return true;
-  if (/^(var|let|const|function)\s/.test(l)) return true;
-  if (/gtmEventObject|dataLayer|createElement/.test(l)) return true;
-  return false;
-}
-
+// Extrae texto del HTML de una pagina AMP de VOA
 function extraerTexto(html) {
   try {
     var doc = new DOMParser().parseFromString(html, 'text/html');
@@ -73,7 +51,6 @@ function extraerTexto(html) {
               doc.querySelector('[itemprop="articleBody"]') ||
               doc.querySelector('.article-content') ||
               doc.querySelector('#article-content') ||
-              doc.querySelector('.wysiwyg') ||
               doc.querySelector('article') ||
               doc.querySelector('main');
     if (!art) return '';
@@ -82,93 +59,13 @@ function extraerTexto(html) {
     var vistos = {};
     for (var i = 0; i < nodos.length; i++) {
       var t = (nodos[i].innerText || '').trim();
-      if (!t) continue;
-      if (esBasura(t)) continue;
+      if (!t || t.length < 3) continue;
+      if (!/[A-Za-z\u00c0-\u017f]/.test(t)) continue;
+      if (/^(Download Lesson|Your browser doesn|Speaking Practice|Pronunciation|Conversation|Learn the alphabet|Listening Quiz|Video|Audio)$/i.test(t)) continue;
       if (vistos[t]) continue;
       vistos[t] = 1;
       lineas.push(t);
     }
     return lineas.join('\n\n').replace(/\n{3,}/g, '\n\n').trim();
   } catch (e) { return ''; }
-}
-
-function extraerTextoDeHtml(html) {
-  return extraerTexto(html);
-}
-
-function limpiarMarkdownJina(md, tituloArticulo) {
-  if (!md) return '';
-
-  var idx = md.indexOf('Markdown Content:');
-  if (idx >= 0) md = md.slice(idx + 'Markdown Content:'.length);
-
-  // Nueva estrategia: cortar desde el primer parrafo real.
-  // Un parrafo real del articulo tiene mas de 80 caracteres y no es un menu/lista.
-  var lineas_previas = md.split('\n');
-  var idxInicio = -1;
-  for (var k = 0; k < lineas_previas.length; k++) {
-    var linea = lineas_previas[k].trim();
-    // Saltar vacias, imagenes, bullets
-    if (!linea || /^!\[/.test(linea) || /^[\*\-\+]\s/.test(linea)) continue;
-    // Saltar encabezados
-    if (/^#/.test(linea)) continue;
-    // Saltar lineas que parecen titulos cortos de la lista de episodios
-    // (menos de 80 caracteres y sin puntuacion de parrafo)
-    if (linea.length < 80 && !/[.,;:]\s/.test(linea.slice(0, -10))) {
-      // Podria ser titulo o fecha; seguir buscando
-      continue;
-    }
-    // Candidato: linea larga (>80 chars) con puntuacion
-    if (linea.length >= 80) {
-      idxInicio = k;
-      break;
-    }
-  }
-
-  if (idxInicio > 0) {
-    md = lineas_previas.slice(idxInicio).join('\n');
-  }
-
-  var lineas = md.split('\n');
-  var salida = [];
-  var vistos = {};
-
-  for (var i = 0; i < lineas.length; i++) {
-    var l = (lineas[i] || '').trim();
-    if (!l) continue;
-
-    if (/^!\[/.test(l)) continue;
-    if (/^[\*\-\+]\s+\[[^\]]+\]\([^)]+\)\s*$/.test(l)) continue;
-    if (/^\[[^\]]+\]\([^)]+\)\s*$/.test(l)) continue;
-    if (/^#{1,6}\s+(Follow Us|Subscribe|About|Articles|Episodes|Forum|Related|More|Share|Languages|Search|Previous|Next|Breaking News|Direct link|Embed|Advertisement|See .*|Skip to .+|TV Programs|Radio Programs|Load more|Calendar|Latest|Words in This Story)\s*$/i.test(l)) continue;
-    if (/^(January|February|March|April|May|June|July|August|September|October|November|December)\s+\d{1,2},\s+\d{4}$/.test(l)) continue;
-    if (/^\d{1,2}:\d{2}(\s+\d{1,2}:\d{2})*$/.test(l)) continue;
-    if (/^(Previous|Next)\s*$/.test(l)) continue;
-    if (/^Apple Podcasts/.test(l)) continue;
-    if (/^(Subscribe|See TV Programs|See Radio Programs)/i.test(l)) continue;
-
-    l = l.replace(/^[#>\*\-\+\s]+/, '');
-    l = l.replace(/\[([^\]]+)\]\([^)]+\)/g, '$1');
-    l = l.replace(/!\[[^\]]*\]\([^)]*\)/g, '');
-    l = l.replace(/\*\*/g, '').replace(/__/g, '').replace(/`/g, '');
-    l = l.replace(/^_([^_]+)_$/, '$1');
-    l = l.replace(/^\*([^\*]+)\*$/, '$1');
-    l = decodificarEntidades(l);
-
-    if (!l || l.length < 3) continue;
-    if (esBasura(l)) continue;
-    if (/^[-=_\s\*]{3,}$/.test(l)) continue;
-    if (/^_{3,}$/.test(l)) continue;
-    if (vistos[l]) continue;
-    vistos[l] = 1;
-
-    salida.push(l);
-  }
-
-  var texto = salida.join('\n\n').replace(/\n{3,}/g, '\n\n').trim();
-
-  var fin = texto.search(/\n+(See comments|Episodes|Forum|See all episodes|Previous|Next)\b/i);
-  if (fin > 200) texto = texto.slice(0, fin).trim();
-
-  return texto;
 }

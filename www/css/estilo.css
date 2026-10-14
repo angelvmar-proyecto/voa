@@ -38,6 +38,7 @@ header .sub { font-size: 12px; opacity: .85; margin-top: 2px; }
 .item .desc.guardado { background: #16a34a; }
 .item .play { background: #e2e8f0; color: #1e293b; }
 .item .texto { background: #f59e0b; color: #fff; }
+.item .abrir { background: #0891b2; color: #fff; }
 .item audio { width: 100%; margin-top: 8px; }
 .texto-box { background: #fffbeb; border: 1px solid #fcd34d;
              border-radius: 8px; padding: 12px; margin-top: 8px;
@@ -54,4 +55,3 @@ footer { position: fixed; bottom: 0; left: 0; right: 0; background: #1e293b;
          line-height: 1.4; }
 footer a { color: #93c5fd; text-decoration: none; }
 footer .marca { color: #fbbf24; font-weight: 700; }
-.item .abrir { background: #0891b2; color: #fff; }

@@ -3,15 +3,11 @@ window._turismoItems = [];
 
 async function cargarTurismo() {
   try {
-    await Filesystem.mkdir({
-      path: CARPETA_TURISMO, directory: Directory.External, recursive: true
-    });
+    await Filesystem.mkdir({ path: CARPETA_TURISMO, directory: Directory.External, recursive: true });
   } catch (e) {}
 
   try {
-    var uri = await Filesystem.getUri({
-      path: CARPETA_TURISMO, directory: Directory.External
-    });
+    var uri = await Filesystem.getUri({ path: CARPETA_TURISMO, directory: Directory.External });
     var ruta = uri.uri.replace('file://', '');
     document.getElementById('ruta-turismo').innerHTML =
       '📁 Suelta tus MP3 y TXT en:<br>' + escapeHtml(ruta);
@@ -24,9 +20,7 @@ async function cargarTurismo() {
   setEstado('turismo', '');
 
   try {
-    var result = await Filesystem.readdir({
-      path: CARPETA_TURISMO, directory: Directory.External
-    });
+    var result = await Filesystem.readdir({ path: CARPETA_TURISMO, directory: Directory.External });
     var archivos = result.files || [];
     var mapa = {};
     archivos.forEach(function(f) {
@@ -79,8 +73,7 @@ function renderTurismo(items) {
     div.className = 'item';
     div.innerHTML =
       '<h3>' + escapeHtml(it.titulo) + '</h3>' +
-      '<div class="meta">' + escapeHtml(it.base) +
-        (it.texto ? ' · con texto' : ' · solo audio') + '</div>' +
+      '<div class="meta">' + escapeHtml(it.base) + (it.texto ? ' · con texto' : ' · solo audio') + '</div>' +
       '<div class="acciones">' +
         '<button class="play-local" data-i="' + i + '">▶️ Reproducir</button>' +
         (it.texto ? '<button class="texto-local" data-i="' + i + '">📖 Texto</button>' : '') +
