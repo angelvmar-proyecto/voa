@@ -117,7 +117,7 @@ function aAmp(url) {
 // =================================================================
 // OBTENER TEXTO: AMP primero, r.jina.ai como respaldo
 // =================================================================
-async function obtenerTextoArticulo(urlPagina, tab) {
+async function obtenerTextoArticulo(urlPagina, tab, tituloArticulo) {
   log('=== obtenerTextoArticulo ===');
   log('tab: ' + tab);
   log('url: ' + urlPagina);
@@ -129,11 +129,11 @@ async function obtenerTextoArticulo(urlPagina, tab) {
     var textoAmp = extraerTexto(html);
     log('Texto AMP extraido: ' + (textoAmp || '').length + ' chars');
     if (textoAmp && textoAmp.length > 200) {
-      console.log('[' + tab + '] Texto via AMP: ' + textoAmp.length + ' chars');
+      log('[' + tab + '] Texto via AMP: ' + textoAmp.length + ' chars');
       return textoAmp;
     }
   } catch (e) {
-    console.log('[' + tab + '] AMP falló:', e.message);
+    log('[' + tab + '] AMP falló: ' + e.message);
   }
 
   // 2) Respaldo: r.jina.ai (ejecuta JS en el servidor)
@@ -145,12 +145,12 @@ async function obtenerTextoArticulo(urlPagina, tab) {
     var textoJina = limpiarMarkdownJina(md, tituloArticulo);
     log('Texto JINA limpiado: ' + (textoJina || '').length + ' chars');
     if (textoJina && textoJina.length > 200) {
-      console.log('[' + tab + '] Texto via jina: ' + textoJina.length + ' chars');
+      log('[' + tab + '] Texto via jina: ' + textoJina.length + ' chars');
       return textoJina;
     }
-    console.log('[' + tab + '] jina devolvió poco texto: ' + (textoJina || '').length);
+    log('[' + tab + '] jina devolvió poco texto: ' + (textoJina || '').length);
   } catch (e) {
-    console.log('[' + tab + '] jina falló:', e.message);
+    log('[' + tab + '] jina falló: ' + e.message);
   }
 
   return '';
@@ -219,7 +219,7 @@ async function descargarVOA(tab, i, boton) {
     if (it.pagina) {
       try {
         boton.innerHTML = '<span class="spinner"></span> Texto...';
-        var texto = await obtenerTextoArticulo(it.pagina, tab);
+        var texto = await obtenerTextoArticulo(it.pagina, tab, it.titulo);
         if (texto && texto.length > 50) {
           await escribirArchivo(rutas.texto, texto, 'utf8');
         }
@@ -283,7 +283,7 @@ async function mostrarTextoVOA(tab, i, boton) {
   if (!texto && it.pagina) {
     boton.innerHTML = '<span class="spinner"></span> Bajando...';
     try {
-      texto = await obtenerTextoArticulo(it.pagina, tab);
+      texto = await obtenerTextoArticulo(it.pagina, tab, it.titulo);
       if (texto && texto.length > 50) {
         await escribirArchivo(rutas.texto, texto, 'utf8');
       }
