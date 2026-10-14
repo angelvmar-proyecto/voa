@@ -81,7 +81,7 @@ async function borrarTextos(tab) {
   var n = 0;
   for (var i = 0; i < items.length; i++) {
     var rutas = rutasPara(tab, items[i].titulo);
-    try { await Filesystem.deleteFile({ path: rutas.texto, directory: Directory.External, recursive: true }); n++; } catch (e) {}
+    try { await getFilesystem().deleteFile({ path: rutas.texto, directory: Directory.External, recursive: true }); n++; } catch (e) {}
   }
   await cargarVista(tab);
   setEstado(tab, '✅ ' + n + ' textos borrados.', 'ok');
@@ -194,7 +194,7 @@ async function reproducirVOA(tab, i, boton) {
   try {
     var src;
     if (await existeArchivo(rutas.audio)) {
-      var r = await Filesystem.readFile({
+      var r = await getFilesystem().readFile({
         path: rutas.audio, directory: Directory.External, recursive: true
       });
       src = 'data:audio/mpeg;base64,' + r.data;

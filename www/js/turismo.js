@@ -3,11 +3,11 @@ window._turismoItems = [];
 
 async function cargarTurismo() {
   try {
-    await Filesystem.mkdir({ path: CARPETA_TURISMO, directory: Directory.External, recursive: true });
+    await getFilesystem().mkdir({ path: CARPETA_TURISMO, directory: Directory.External, recursive: true });
   } catch (e) {}
 
   try {
-    var uri = await Filesystem.getUri({ path: CARPETA_TURISMO, directory: Directory.External });
+    var uri = await getFilesystem().getUri({ path: CARPETA_TURISMO, directory: Directory.External });
     var ruta = uri.uri.replace('file://', '');
     document.getElementById('ruta-turismo').innerHTML =
       '📁 Suelta tus MP3 y TXT en:<br>' + escapeHtml(ruta);
@@ -20,7 +20,7 @@ async function cargarTurismo() {
   setEstado('turismo', '');
 
   try {
-    var result = await Filesystem.readdir({ path: CARPETA_TURISMO, directory: Directory.External });
+    var result = await getFilesystem().readdir({ path: CARPETA_TURISMO, directory: Directory.External });
     var archivos = result.files || [];
     var mapa = {};
     archivos.forEach(function(f) {
@@ -39,7 +39,7 @@ async function cargarTurismo() {
       var titulo = base.replace(/_/g, ' ');
       if (info.texto) {
         try {
-          var r = await Filesystem.readFile({
+          var r = await getFilesystem().readFile({
             path: CARPETA_TURISMO + '/' + info.texto,
             directory: Directory.External, encoding: 'utf8', recursive: true
           });
@@ -90,7 +90,7 @@ async function reproducirLocal(i, boton) {
   if (cont.innerHTML) { cont.innerHTML = ''; boton.innerHTML = '▶️ Reproducir'; return; }
   boton.disabled = true;
   try {
-    var uri = await Filesystem.getUri({
+    var uri = await getFilesystem().getUri({
       path: CARPETA_TURISMO + '/' + it.audio, directory: Directory.External
     });
     var src = window.Capacitor && window.Capacitor.convertFileSrc
@@ -110,7 +110,7 @@ async function mostrarTextoLocal(i, boton) {
   if (cont.innerHTML) { cont.innerHTML = ''; return; }
   boton.disabled = true;
   try {
-    var r = await Filesystem.readFile({
+    var r = await getFilesystem().readFile({
       path: CARPETA_TURISMO + '/' + it.texto,
       directory: Directory.External, encoding: 'utf8', recursive: true
     });
