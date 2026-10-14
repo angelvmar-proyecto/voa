@@ -4,7 +4,6 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.util.Log;
-import android.view.View;
 import android.view.ViewGroup;
 import android.webkit.JavascriptInterface;
 import android.webkit.WebSettings;
@@ -32,7 +31,6 @@ public class MainActivity extends BridgeActivity {
         Log.d("VOA_NATIVE", "App iniciada, NativeExtractor registrado");
     }
 
-    // ============ PUENTE JS <-> JAVA ============
     public class ExtractorBridge {
         @JavascriptInterface
         public void extraerTexto(final String url, final String callbackId) {
@@ -55,7 +53,6 @@ public class MainActivity extends BridgeActivity {
         }
     }
 
-    // ============ EXTRACCION ============
     private void cargarYExtraer(String url) {
         yaExtrajo = false;
 
@@ -76,8 +73,6 @@ public class MainActivity extends BridgeActivity {
             ViewGroup root = (ViewGroup) this.bridge.getWebView().getParent();
             if (root != null) {
                 root.addView(hiddenWebView);
-            } else {
-                Log.d("VOA_NATIVE", "No se encontro root view");
             }
         }
 
@@ -93,7 +88,7 @@ public class MainActivity extends BridgeActivity {
                     public void run() {
                         inyectarExtractor();
                     }
-                }, 8000);
+                }, 10000);
             }
         });
 
@@ -105,7 +100,7 @@ public class MainActivity extends BridgeActivity {
                 Log.d("VOA_NATIVE", "TIMEOUT");
                 enviarCallbackFinal("{\"ok\":false,\"error\":\"timeout\"}");
             }
-        }, 30000);
+        }, 35000);
 
         Log.d("VOA_NATIVE", "loadUrl: " + url);
         hiddenWebView.loadUrl(url);
@@ -116,7 +111,12 @@ public class MainActivity extends BridgeActivity {
         String js =
             "(function(){" +
             "try{" +
-            "  var el = document.querySelector('.wsw') || document.querySelector('[itemprop=\"articleBody\"]') || document.querySelector('.article-content') || document.querySelector('article') || document.querySelector('main');" +
+            "  var el = document.querySelector('.content-offset')" +
+            "    || document.querySelector('.wsw')" +
+            "    || document.querySelector('[itemprop=\"articleBody\"]')" +
+            "    || document.querySelector('.article-content')" +
+            "    || document.querySelector('article')" +
+            "    || document.querySelector('main');" +
             "  if(!el){" +
             "    HiddenNative.onTexto(JSON.stringify({ok:false,error:'no container',bodyLen:document.body?document.body.innerText.length:0}));" +
             "    return;" +
@@ -125,11 +125,11 @@ public class MainActivity extends BridgeActivity {
             "  var lineas = texto.split('\\n').map(function(l){return l.trim();}).filter(function(l){" +
             "    if(!l || l.length < 3) return false;" +
             "    if(!/[A-Za-z]/.test(l)) return false;" +
-            "    if(/^(Download Lesson|Your browser doesn|Speaking Practice|Pronunciation|Conversation|Learn the alphabet|Listening Quiz|Video|Audio|Subscribe|Share|Embed|Previous|Next|Advertisement)$/i.test(l)) return false;" +
+            "    if(/^(Download Lesson|Your browser doesn|Speaking Practice|Pronunciation|Conversation|Learn the alphabet|Listening Quiz|Video|Audio|Subscribe|Share|Embed|Previous|Next|Advertisement|See all|See TV|See Radio|Forum|Episodes)$/i.test(l)) return false;" +
             "    return true;" +
             "  });" +
             "  var limpio = lineas.join('\\n\\n').replace(/\\n{3,}/g, '\\n\\n').trim();" +
-            "  HiddenNative.onTexto(JSON.stringify({ok:true,texto:limpio,longitud:limpio.length}));" +
+            "  HiddenNative.onTexto(JSON.stringify({ok:true,texto:limpio,longitud:limpio.length,selector:'content-offset'}));" +
             "}catch(e){" +
             "  HiddenNative.onTexto(JSON.stringify({ok:false,error:String(e)}));" +
             "}" +
