@@ -102,26 +102,31 @@ function limpiarMarkdownJina(md, tituloArticulo) {
   var idx = md.indexOf('Markdown Content:');
   if (idx >= 0) md = md.slice(idx + 'Markdown Content:'.length);
 
-  // Si tenemos el titulo, cortar desde su primera aparicion.
-  // Buscamos una version limpia del titulo (sin apostrofes raros)
-  if (tituloArticulo) {
-    var limpio = decodificarEntidades(tituloArticulo)
-      .replace(/ - [A-Z][a-z]+ \d{1,2}, \d{4}$/, '')
-      .trim();
-    // Probar con titulo limpio
-    var idxTitulo = md.indexOf(limpio);
-    if (idxTitulo >= 0) {
-      md = md.slice(idxTitulo + limpio.length);
-    } else {
-      // Probar con la primera parte (antes de ":")
-      var corto = limpio.split(':')[0].trim();
-      if (corto.length > 10) {
-        var idxCorto = md.indexOf(corto);
-        if (idxCorto >= 0) {
-          md = md.slice(idxCorto + corto.length);
-        }
-      }
+  // Nueva estrategia: cortar desde el primer parrafo real.
+  // Un parrafo real del articulo tiene mas de 80 caracteres y no es un menu/lista.
+  var lineas_previas = md.split('\n');
+  var idxInicio = -1;
+  for (var k = 0; k < lineas_previas.length; k++) {
+    var linea = lineas_previas[k].trim();
+    // Saltar vacias, imagenes, bullets
+    if (!linea || /^!\[/.test(linea) || /^[\*\-\+]\s/.test(linea)) continue;
+    // Saltar encabezados
+    if (/^#/.test(linea)) continue;
+    // Saltar lineas que parecen titulos cortos de la lista de episodios
+    // (menos de 80 caracteres y sin puntuacion de parrafo)
+    if (linea.length < 80 && !/[.,;:]\s/.test(linea.slice(0, -10))) {
+      // Podria ser titulo o fecha; seguir buscando
+      continue;
     }
+    // Candidato: linea larga (>80 chars) con puntuacion
+    if (linea.length >= 80) {
+      idxInicio = k;
+      break;
+    }
+  }
+
+  if (idxInicio > 0) {
+    md = lineas_previas.slice(idxInicio).join('\n');
   }
 
   var lineas = md.split('\n');
