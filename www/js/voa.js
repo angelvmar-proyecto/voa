@@ -165,11 +165,32 @@ async function descargarVOA(tab, i, boton) {
     var base64 = await bajar(mp3Url, false);
     await escribirArchivo(rutas.audio, base64);
 
-    // Texto con jina
+    // Texto: intentar nativo, luego jina como respaldo
     if (it.pagina) {
       try {
-        boton.innerHTML = '<span class="spinner"></span> Texto...';
-        var texto = await extraerTextoArticulo(it.pagina);
+        boton.innerHTML = '<span class="spinner"></span> Extrayendo texto...';
+        var texto = '';
+
+        // 1) Extractor nativo (WebView con JS)
+        try {
+          var resNativo = await extraerConNativo(it.pagina);
+          if (resNativo.ok && resNativo.texto && resNativo.texto.length > 200) {
+            texto = resNativo.texto;
+            console.log('Texto via NATIVO: ' + texto.length + ' chars');
+          } else {
+            console.log('Nativo fallo: ' + (resNativo.error || 'texto corto'));
+          }
+        } catch (eN) { console.log('Nativo exception: ' + eN.message); }
+
+        // 2) Respaldo: jina
+        if (!texto) {
+          try {
+            boton.innerHTML = '<span class="spinner"></span> Respaldo...';
+            texto = await extraerTextoArticulo(it.pagina);
+            console.log('Texto via JINA: ' + (texto || '').length + ' chars');
+          } catch (eJ) { console.log('Jina exception: ' + eJ.message); }
+        }
+
         if (texto && texto.length > 100) {
           await escribirArchivo(rutas.texto, texto, 'utf8');
         }
@@ -225,13 +246,27 @@ async function mostrarTextoVOA(tab, i, boton) {
   boton.disabled = true;
   var texto = await leerTexto(rutas.texto);
   if (!texto && it.pagina) {
-    boton.innerHTML = '<span class="spinner"></span> Bajando...';
+    boton.innerHTML = '<span class="spinner"></span> Extrayendo...';
+    var textoNuevo = '';
     try {
-      texto = await extraerTextoArticulo(it.pagina);
-      if (texto && texto.length > 100) {
-        await escribirArchivo(rutas.texto, texto, 'utf8');
+      var resN = await extraerConNativo(it.pagina);
+      if (resN.ok && resN.texto && resN.texto.length > 200) {
+        textoNuevo = resN.texto;
       }
-    } catch (err) { texto = 'Error: ' + err.message; }
+    } catch (eN) {}
+
+    if (!textoNuevo) {
+      try {
+        textoNuevo = await extraerTextoArticulo(it.pagina);
+      } catch (eJ) {}
+    }
+
+    if (textoNuevo && textoNuevo.length > 100) {
+      texto = textoNuevo;
+      await escribirArchivo(rutas.texto, texto, 'utf8');
+    } else if (!textoNuevo) {
+      texto = 'No se pudo extraer el texto de esta pagina.';
+    }
   }
   boton.innerHTML = texto ? '📖 Texto' : '📄 Bajar txt';
   cont.innerHTML = '<div class="texto-box">' + escapeHtml(texto || 'No hay texto.') + '</div>';
