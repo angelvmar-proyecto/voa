@@ -39,23 +39,20 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 
+
+
+
 async function abrirAjustesPermisos() {
   try {
-    if (window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.NativeSettings) {
-      await window.Capacitor.Plugins.NativeSettings.openAndroid({
-        option: 'application_details'
-      });
-      return;
-    }
+    // Intent directo a los ajustes de la app
+    var pkg = 'com.angelvmar.voa';
+    var intentUrl = 'intent:#Intent;action=android.settings.APPLICATION_DETAILS_SETTINGS;data=package:' + pkg + ';end';
+    window.location.href = intentUrl;
+    setTimeout(function() {
+      // Fallback si el intent no funciona
+      alert('Si no se abrieron los ajustes, ve manualmente:\n\nAjustes > Aplicaciones > Mi Inglés VOA > Permisos > Archivos y medios > Permitir administrar todos los archivos');
+    }, 1500);
   } catch (e) {
-    console.log('NativeSettings fallo: ' + e.message);
-  }
-  
-  // Fallback: intentar abrir ajustes con intent
-  try {
-    var intent = 'intent://#Intent;action=android.settings.MANAGE_ALL_FILES_ACCESS_PERMISSION;end';
-    window.location.href = intent;
-  } catch (e2) {
-    alert('Ve manualmente a:\nAjustes > Aplicaciones > Mi Inglés VOA > Permisos > Archivos y medios');
+    alert('Ve manualmente a:\nAjustes > Aplicaciones > Mi Inglés VOA > Permisos');
   }
 }
