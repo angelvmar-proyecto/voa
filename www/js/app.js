@@ -12,7 +12,12 @@ document.addEventListener('click', async function(e) {
   if (!boton) return;
 
   if (boton.classList.contains('desc')) {
-    await descargarVOA(boton.dataset.tab, parseInt(boton.dataset.i, 10), boton);
+    var tabDesc = boton.dataset.tab;
+    if (tabDesc === 'words') {
+      await descargarVOA_Miniweb(tabDesc, parseInt(boton.dataset.i, 10), boton);
+    } else {
+      await descargarVOA(tabDesc, parseInt(boton.dataset.i, 10), boton);
+    }
   } else if (boton.classList.contains('play')) {
     await reproducirVOA(boton.dataset.tab, parseInt(boton.dataset.i, 10), boton);
   } else if (boton.classList.contains('texto')) {
