@@ -83,12 +83,13 @@ public class MainActivity extends BridgeActivity {
                 Log.d("VOA_NATIVE", "onPageFinished");
                 if (yaExtrajo) return;
                 yaExtrajo = true;
+                // Esperar 12 segundos a que VOA ejecute su JS
                 new Handler(Looper.getMainLooper()).postDelayed(new Runnable() {
                     @Override
                     public void run() {
                         inyectarExtractor();
                     }
-                }, 10000);
+                }, 12000);
             }
         });
 
@@ -100,7 +101,7 @@ public class MainActivity extends BridgeActivity {
                 Log.d("VOA_NATIVE", "TIMEOUT");
                 enviarCallbackFinal("{\"ok\":false,\"error\":\"timeout\"}");
             }
-        }, 35000);
+        }, 45000);
 
         Log.d("VOA_NATIVE", "loadUrl: " + url);
         hiddenWebView.loadUrl(url);
