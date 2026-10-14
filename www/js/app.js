@@ -1,10 +1,30 @@
-function cambiarTab(tab) {
+async function iniciarDescargaSeleccionada() {
+  // Obtener programas seleccionados
+  var checks = document.querySelectorAll('#lista-programas input[type=checkbox]:checked');
+  if (!checks.length) {
+    alert('Selecciona al menos un programa');
+    return;
+  }
+  var ids = [];
+  for (var i = 0; i < checks.length; i++) {
+    ids.push(checks[i].dataset.id);
+  }
+  await descargarProgramas(ids);
+}
+
+async function cambiarTab(tab) {
   document.querySelectorAll('.tabs button').forEach(function(b) { b.classList.remove('activo'); });
   document.querySelectorAll('.contenido').forEach(function(c) { c.classList.remove('activo'); });
   document.getElementById('tab-' + tab).classList.add('activo');
   document.getElementById('contenido-' + tab).classList.add('activo');
-  if (tab === 'turismo') cargarTurismo();
-  else cargarVista(tab);
+  
+  if (tab === 'turismo') {
+    cargarTurismo();
+  } else if (tab === 'descargas') {
+    cargarPanelDescargas();
+  } else {
+    cargarVista(tab);
+  }
 }
 
 document.addEventListener('click', async function(e) {
