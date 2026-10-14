@@ -19,8 +19,29 @@ function formatearFecha(s) {
   } catch (e) { return ''; }
 }
 
+// Decodifica entidades HTML (&apos; &amp; &quot; &#39; etc)
+function decodificarEntidades(s) {
+  if (!s) return '';
+  return String(s)
+    .replace(/<!\[CDATA\[|\]\]>/g, '')
+    .replace(/&apos;/g, "'")
+    .replace(/&#0?39;/g, "'")
+    .replace(/&quot;/g, '"')
+    .replace(/&#0?34;/g, '"')
+    .replace(/&amp;/g, '&')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&nbsp;/g, ' ')
+    .replace(/&mdash;/g, '—')
+    .replace(/&ndash;/g, '–')
+    .replace(/&hellip;/g, '…')
+    .replace(/&#x27;/g, "'")
+    .replace(/&#x2F;/g, '/')
+    .trim();
+}
+
 function limpiar(s) {
-  return (s || '').replace(/<!\[CDATA\[|\]\]>/g, '').trim();
+  return decodificarEntidades(s);
 }
 
 function setEstado(tab, msg, tipo) {
@@ -81,12 +102,25 @@ function limpiarMarkdownJina(md, tituloArticulo) {
   var idx = md.indexOf('Markdown Content:');
   if (idx >= 0) md = md.slice(idx + 'Markdown Content:'.length);
 
-  // Si tenemos el titulo, cortar desde su primera aparicion
+  // Si tenemos el titulo, cortar desde su primera aparicion.
+  // Buscamos una version limpia del titulo (sin apostrofes raros)
   if (tituloArticulo) {
-    var limpio = tituloArticulo.replace(/ - [A-Z][a-z]+ \d{1,2}, \d{4}$/, '').trim();
+    var limpio = decodificarEntidades(tituloArticulo)
+      .replace(/ - [A-Z][a-z]+ \d{1,2}, \d{4}$/, '')
+      .trim();
+    // Probar con titulo limpio
     var idxTitulo = md.indexOf(limpio);
     if (idxTitulo >= 0) {
       md = md.slice(idxTitulo + limpio.length);
+    } else {
+      // Probar con la primera parte (antes de ":")
+      var corto = limpio.split(':')[0].trim();
+      if (corto.length > 10) {
+        var idxCorto = md.indexOf(corto);
+        if (idxCorto >= 0) {
+          md = md.slice(idxCorto + corto.length);
+        }
+      }
     }
   }
 
@@ -98,37 +132,27 @@ function limpiarMarkdownJina(md, tituloArticulo) {
     var l = (lineas[i] || '').trim();
     if (!l) continue;
 
-    // Saltar imagenes
     if (/^!\[/.test(l)) continue;
-    // Saltar bullets que solo son enlaces
     if (/^[\*\-\+]\s+\[[^\]]+\]\([^)]+\)\s*$/.test(l)) continue;
-    // Saltar lineas que son solo un enlace
     if (/^\[[^\]]+\]\([^)]+\)\s*$/.test(l)) continue;
-    // Saltar encabezados de navegacion
-    if (/^#{1,6}\s+(Follow Us|Subscribe|About|Articles|Episodes|Forum|Related|More|Share|Languages|Search|Previous|Next|Breaking News|Direct link|Embed|Advertisement|See .*|Skip to .+|TV Programs|Radio Programs|Load more|Calendar|Latest)\s*$/i.test(l)) continue;
-    // Saltar fechas solas
+    if (/^#{1,6}\s+(Follow Us|Subscribe|About|Articles|Episodes|Forum|Related|More|Share|Languages|Search|Previous|Next|Breaking News|Direct link|Embed|Advertisement|See .*|Skip to .+|TV Programs|Radio Programs|Load more|Calendar|Latest|Words in This Story)\s*$/i.test(l)) continue;
     if (/^(January|February|March|April|May|June|July|August|September|October|November|December)\s+\d{1,2},\s+\d{4}$/.test(l)) continue;
-    // Saltar duraciones
     if (/^\d{1,2}:\d{2}(\s+\d{1,2}:\d{2})*$/.test(l)) continue;
-    // Saltar Previous/Next solos
     if (/^(Previous|Next)\s*$/.test(l)) continue;
     if (/^Apple Podcasts/.test(l)) continue;
     if (/^(Subscribe|See TV Programs|See Radio Programs)/i.test(l)) continue;
 
-    // Quitar markdown
     l = l.replace(/^[#>\*\-\+\s]+/, '');
     l = l.replace(/\[([^\]]+)\]\([^)]+\)/g, '$1');
     l = l.replace(/!\[[^\]]*\]\([^)]*\)/g, '');
     l = l.replace(/\*\*/g, '').replace(/__/g, '').replace(/`/g, '');
-    // Quitar cursivas _texto_ y *texto*
     l = l.replace(/^_([^_]+)_$/, '$1');
     l = l.replace(/^\*([^\*]+)\*$/, '$1');
-    l = l.trim();
+    l = decodificarEntidades(l);
 
     if (!l || l.length < 3) continue;
     if (esBasura(l)) continue;
     if (/^[-=_\s\*]{3,}$/.test(l)) continue;
-    // Quitar separadores tipo ______ (varios underscores)
     if (/^_{3,}$/.test(l)) continue;
     if (vistos[l]) continue;
     vistos[l] = 1;

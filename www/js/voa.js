@@ -36,7 +36,7 @@ function parsearRSS(xml) {
     var pub = it.match(/<pubDate>([\s\S]*?)<\/pubDate>/);
     if (!t || !mp3) return null;
     return {
-      titulo: limpiar(t[1]),
+      titulo: decodificarEntidades(t[1]),
       mp3: limpiar(mp3[1].replace(/\\\//g, '/')),
       pagina: link ? limpiar(link[1]) : null,
       fecha: pub ? limpiar(pub[1]) : ''
@@ -118,10 +118,16 @@ function aAmp(url) {
 // OBTENER TEXTO: AMP primero, r.jina.ai como respaldo
 // =================================================================
 async function obtenerTextoArticulo(urlPagina, tab) {
+  log('=== obtenerTextoArticulo ===');
+  log('tab: ' + tab);
+  log('url: ' + urlPagina);
   // 1) Intentar AMP (funciona perfecto en Let's Learn)
   try {
+    log('Intentando AMP: ' + aAmp(urlPagina));
     var html = await bajar(aAmp(urlPagina), true);
+    log('AMP descargado: ' + html.length + ' chars');
     var textoAmp = extraerTexto(html);
+    log('Texto AMP extraido: ' + (textoAmp || '').length + ' chars');
     if (textoAmp && textoAmp.length > 200) {
       console.log('[' + tab + '] Texto via AMP: ' + textoAmp.length + ' chars');
       return textoAmp;
@@ -133,8 +139,11 @@ async function obtenerTextoArticulo(urlPagina, tab) {
   // 2) Respaldo: r.jina.ai (ejecuta JS en el servidor)
   try {
     var jinaUrl = 'https://r.jina.ai/' + urlPagina;
+    log('Intentando JINA: ' + jinaUrl);
     var md = await bajar(jinaUrl, true);
+    log('JINA descargado: ' + (md || '').length + ' chars');
     var textoJina = limpiarMarkdownJina(md, tituloArticulo);
+    log('Texto JINA limpiado: ' + (textoJina || '').length + ' chars');
     if (textoJina && textoJina.length > 200) {
       console.log('[' + tab + '] Texto via jina: ' + textoJina.length + ' chars');
       return textoJina;
@@ -186,6 +195,7 @@ async function cargarVista(tab) {
 }
 
 async function descargarVOA(tab, i, boton) {
+  log('--- descargarVOA tab=' + tab + ' i=' + i + ' ---');
   var items = await leerJSON('biblioteca_' + tab + '.json');
   var it = items[i];
   var rutas = rutasPara(tab, it.titulo);
@@ -221,6 +231,7 @@ async function descargarVOA(tab, i, boton) {
     boton.classList.add('guardado');
     boton.innerHTML = '✅ Guardado';
     boton.disabled = false;
+    await guardarLogs();
     await cargarVista(tab);
   } catch (err) {
     boton.innerHTML = '❌ Reintentar';
