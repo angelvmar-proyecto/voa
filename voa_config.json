@@ -1,0 +1,74 @@
+{
+  "fases": {
+    "1a": {
+      "descripcion": "Let's Learn + Words & Stories",
+      "programas": ["lets_learn_1", "lets_learn_2", "words_stories"]
+    },
+    "1b": {
+      "descripcion": "Science & Technology",
+      "programas": ["science_tech"]
+    },
+    "1c": {
+      "descripcion": "Gramatica e historia",
+      "programas": ["everyday_grammar", "ask_teacher", "american_stories", "us_history", "america_presidents"]
+    },
+    "1d": {
+      "descripcion": "Cultura y estilo de vida",
+      "programas": ["arts_culture", "health_lifestyle", "as_it_is"]
+    },
+    "todo": {
+      "descripcion": "Todos los programas",
+      "programas": ["lets_learn_1", "lets_learn_2", "words_stories", "science_tech", "everyday_grammar", "ask_teacher", "american_stories", "us_history", "america_presidents", "arts_culture", "health_lifestyle", "as_it_is"]
+    }
+  },
+  "programas": {
+    "lets_learn_1": {
+      "nombre": "Let's Learn English - Level 1",
+      "feed": "https://learningenglish.voanews.com/api/ziqiqil-vomx-tpemumqm"
+    },
+    "lets_learn_2": {
+      "nombre": "Let's Learn English - Level 2",
+      "feed": "https://learningenglish.voanews.com/api/zt-pq_l-vomx-tpekyyqv"
+    },
+    "words_stories": {
+      "nombre": "Words & Their Stories",
+      "feed": "https://learningenglish.voanews.com/api/zmypyl-vomx-tpeyry_"
+    },
+    "science_tech": {
+      "nombre": "Science & Technology",
+      "feed": "https://learningenglish.voanews.com/api/zmg_pl-vomx-tpeymtm"
+    },
+    "everyday_grammar": {
+      "nombre": "Everyday Grammar",
+      "feed": "https://learningenglish.voanews.com/api/zoroqql-vomx-tpeptpqq"
+    },
+    "ask_teacher": {
+      "nombre": "Ask a Teacher",
+      "feed": "https://learningenglish.voanews.com/api/zti_qvl-vomx-tpekgvqr"
+    },
+    "american_stories": {
+      "nombre": "American Stories",
+      "feed": "https://learningenglish.voanews.com/api/zyg__l-vomx-tpetmty"
+    },
+    "us_history": {
+      "nombre": "U.S. History",
+      "feed": "https://learningenglish.voanews.com/api/zj_pvl-vomx-tpebb_v"
+    },
+    "america_presidents": {
+      "nombre": "America's Presidents",
+      "feed": "https://learningenglish.voanews.com/api/zjypq_l-vomx-tpebryqy"
+    },
+    "arts_culture": {
+      "nombre": "Arts & Culture",
+      "feed": "https://learningenglish.voanews.com/api/zpyp_l-vomx-tpe_rym"
+    },
+    "health_lifestyle": {
+      "nombre": "Health & Lifestyle",
+      "feed": "https://learningenglish.voanews.com/api/zmmpql-vomx-tpey-_q"
+    },
+    "as_it_is": {
+      "nombre": "As It Is",
+      "feed": "https://learningenglish.voanews.com/api/zkm-ql-vomx-tpej-rqi"
+    }
+  }
+}
