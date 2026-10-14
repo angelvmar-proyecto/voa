@@ -1,0 +1,6 @@
+URL: https://learningenglish.voanews.com/hljson
+MIME: application/json
+SIZE: 776 chars
+============================================================
+
+{"liveHighlights":{"items":[{"itemId":8206045,"itemTitle":"Learning English Podcast","tubeId":122,"tubeTitle":"VOA Learning English","mediaType":"audio","status":"Latest","url":"https://learningenglish.voanews.com/a/8206045.html","badge":null,"timeBadge":null,"category":"LH","sectionTitle":"Latest program","icon":"ico-audio","imgSrc":"https://gdb.voanews.com/01000000-0aff-0242-e785-08db45a50883_w66_r1.jpg"},{"itemId":8206506,"itemTitle":"Learning English Podcast","tubeId":122,"tubeTitle":"VOA Learning English","mediaType":"audio","status":"Upcoming","url":"https://learningenglish.voanews.com/","badge":null,"timeBadge":"00:30 - 01:00","category":"LH","sectionTitle":"Upcoming","icon":"ico-audio","imgSrc":null}],"rotate":5000},"breakingNews":{"items":[],"rotate":5000}}

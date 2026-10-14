@@ -1,0 +1,6 @@
+URL: https://rp4.liadm.com/j?dtstmp=1791962708759&did=did-0049&se=eyJzZW5kZXIiOiJkaXNxdXMifQ&duid=8b4c213087a2--01m4wmsyr3gp048g0g2y395wb7&tv=v3.19.0&pu=https%3A%2F%2Flearningenglish.voanews.com%2Fa%2F8006750.html&ext_dsq__s=1q4aosu76j2i2&ext_dsq__u=1q4aosu76j2i2&ext__fbp=fb.1.1791962705444.383516756956872915&wpn=lc-bundle&wpv=v3.19.0&cd=.voanews.com&cl=aHR0cHM6Ly9sZWFybmluZ2VuZ2xpc2gudm9hbmV3cy5jb20vYS84MDA2NzUwLmh0bWw&pv=00f3fd7e-693e-4269-b191-d1a5ba394e59&i6=MjgwNjoxMGJlOjc6MzY1NDo2OTIyOmFmZTQ6ZmIxNzoxZGEy&n3pc=true
+MIME: application/json
+SIZE: 13 chars
+============================================================
+
+{"bakers":[]}

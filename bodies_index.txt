@@ -1,0 +1,36 @@
+[0] application/javascript (4328 chars)
+    https://learningenglish.voanews.com/Scripts/responsive/infographics.bundle.min.js?&av=0.0.0.0&cb=323
+
+[1] application/javascript (18100 chars)
+    https://learningenglish.voanews.com/Scripts/responsive/modules/commons.js?&av=0.0.0.0&cb=323
+
+[2] application/javascript (6541 chars)
+    https://learningenglish.voanews.com/Scripts/responsive/dollardom.min.js?&av=0.0.0.0&cb=323
+
+[3] application/javascript (55512 chars)
+    https://learningenglish.voanews.com/Scripts/responsive/modules/app_code.js?&av=0.0.0.0&cb=323
+
+[4] application/javascript (2732 chars)
+    https://learningenglish.voanews.com/conf.js?x=323
+
+[5] application/javascript (1573 chars)
+    https://learningenglish.voanews.com/Scripts/responsive/serviceWorkerInstall.js?cb=323
+
+[6] application/javascript (206575 chars)
+    https://learningenglish.voanews.com/res?callback=_resourceLoaderReceiver_0&x=323&dependencies=prog_install_prompt,collapsible,switcher,highlights,hljson_loader,smooth_scroll,google_translate,content_s
+
+[7] application/json (776 chars)
+    https://learningenglish.voanews.com/hljson
+
+[8] application/x-javascript (388673 chars)
+    https://connect.facebook.net/signals/config/266460157046590?v=2.9.419&r=stable&domain=learningenglish.voanews.com&im=1&hme=7459fa3e38c2784dbaf309537bed5fa7e8560fab51fb61e53e5ffafeb46a02a9&ex_m=118%2C2
+
+[9] application/json (13 chars)
+    https://rp4.liadm.com/j?dtstmp=1791962708759&did=did-0049&se=eyJzZW5kZXIiOiJkaXNxdXMifQ&duid=8b4c213087a2--01m4wmsyr3gp048g0g2y395wb7&tv=v3.19.0&pu=https%3A%2F%2Flearningenglish.voanews.com%2Fa%2F8006
+
+[10] application/javascript (2787 chars)
+    https://learningenglish.voanews.com/res?callback=_resourceLoaderReceiver_1&x=323&dependencies=widget_or_player_iframe_parent
+
+[11] application/json (776 chars)
+    https://learningenglish.voanews.com/hljson
+

@@ -1,0 +1,63 @@
+Total peticiones: 457
+
+=== URLs de interes ===
+[200] text/html (495 bytes)
+  https://learningenglish.voanews.com/a/8006750.html
+
+[200] text/css (387 bytes)
+  https://learningenglish.voanews.com/Content/responsive/VOA/en-US-LEARN/VOA-en-US-LEARN.css?&av=0.0.0.0&cb=323
+
+[200] image/svg+xml (381 bytes)
+  https://learningenglish.voanews.com/Content/responsive/VOA/en-US-LEARN/img/logo-compact.svg?cb=323
+
+[200] image/png (357 bytes)
+  https://learningenglish.voanews.com/Content/responsive/img/player-spinner.png
+
+[200] application/font-woff (370 bytes)
+  https://learningenglish.voanews.com/Content/responsive/fonts/Skolar-Lt_Latin_v2.woff
+
+[200] image/svg+xml (370 bytes)
+  https://learningenglish.voanews.com/Content/responsive/VOA/img/image-placeholder.svg
+
+[200] application/font-woff (374 bytes)
+  https://learningenglish.voanews.com/Content/responsive/fonts/icons-font-1784627453699.woff
+
+[200] application/font-woff (380 bytes)
+  https://learningenglish.voanews.com/Content/responsive/fonts/SkolarSans-Cn-Bd_LatnCyrl_v2.3.woff
+
+[200] application/font-woff (380 bytes)
+  https://learningenglish.voanews.com/Content/responsive/VOA/en-US-LEARN/img/icons-custom.woff?cb=10
+
+[200] image/png (353 bytes)
+  https://learningenglish.voanews.com/Content/responsive/img/audio-wave.png
+
+[200] application/json (594 bytes)
+  https://dpm.demdex.net/id/rd?d_visid_ver=5.4.0&d_fieldgroup=MC&d_rtbd=json&d_ver=2&d_verify=1&d_orgid=518ABC7455E462B97F000101%40AdobeOrg&d_nsid=0&ts=1791962463437
+
+[200] application/javascript (730 bytes)
+  https://learningenglish.voanews.com/res?callback=_resourceLoaderReceiver_0&x=323&dependencies=prog_install_prompt,collapsible,switcher,highlights,hljson_loader,smooth_scroll,google_translate,content_sharing,load_more,swipe_slide,slider_nav_tabs,simple_captcha,analyticstag_event,widget_or_player_iframe_child,popup_opener,whatsapp_share_button,multimedia_player_utils,multimedia_player_analytics,multimedia_player_core,multimedia_player_ui,sticky_player_pangea_video,sticky_player_history_handler,sticky_player,copy_to_clipboard,accordeon,share_link,sharing_open,podcast_sub,transition_toggler,nav20
+
+[200] application/json (329 bytes)
+  https://learningenglish.voanews.com/hljson
+
+[200] application/javascript (583 bytes)
+  https://voa-en-us-learn-428.disqus.com/count-data.js?1=8006750
+
+[200] text/html (1918 bytes)
+  https://disqus.com/embed/comments/?base=default&f=voa-en-us-learn-428&t_i=8006750&t_u=https%3A%2F%2Flearningenglish.voanews.com%2Fa%2F8006750.html&t_d=%0A%20%20%20%20%20%20%20%20%27Watching%20the%20Grass%20Grow%27%20Is%20Not%20Fun%0A%20%20%20%20&t_t=%0A%20%20%20%20%20%20%20%20%27Watching%20the%20Grass%20Grow%27%20Is%20Not%20Fun%0A%20%20%20%20&s_o=default
+
+[200] image/gif (162 bytes)
+  https://bbg.sc.omtrdc.net/b/ss/bbgprod,bbgentityvoa/1/JS-2.23.0/s26493163330562?AQB=1&ndh=1&pf=1&t=14%2F9%2F2026%202%3A21%3A5%203%20300&sdid=08459708D4A742AB-6EBD72CE08648C01&mid=60298791568904910281451182810729527339&aamlh=7&ce=UTF-8&ns=bbg&cdp=2&pageName=voa%3Alearn%3Aw%3Aclipsexternal%3A%27watching%20the%20grass%20grow%27%20is%20not%20fun&g=https%3A%2F%2Flearningenglish.voanews.com%2Fa%2F8006750.html&cc=USD&ch=%2Fa&server=learningenglish.voanews.com&events=event1&aamb=RKhpRz8krg2tLO6pguXWp5olkAcUniQYPHaMWWgdJ3xzPWQmdj0y&v1=https%3A%2F%2Flearningenglish.voanews.com%2Fa%2F8006750.html&v4=audio&v5=words%20and%20their%20stories&v6=%27watching%20the%20grass%20grow%27%20is%20not%20fun&v10=03%2F11%2F2025&v11=15&v14=8006750&v15=english&v16=voa%20learning%20english&v17=web&v20=yes&v21=clipsexternal&v23=60298791568904910281451182810729527339&v25=voa&v27=VOA%20Learning%20English%20Responsive&v29=learningenglish.voanews.com&v30=473&v31=https%3A%2F%2Flearningenglish.voanews.com%2Fa%2F8006750.html&v32=voa%3Alearn%3Aw%3Aclipsexternal%3A%27watching%20the%20grass%20grow%27%20is%20not%20fun&v36=8.49.0.0.323&v38=clipsexternal&v39=learningenglish-words-stories&v70=2.23.0&v71=bbgprod-bbgentityvoa&v72=prod&v75=2.23.0&v82=view&v85=learningenglish-words-stories&v100=2026-10-14%3A02.21%3A-05.00&v101=America%2FCancun&v102=en-US%3Aen%3Aen-US&v104=iq&v111=ut4.55.202610072213&s=800x600&c=24&j=1.6&v=N&k=Y&bw=1920&bh=937&mcorgid=518ABC7455E462B97F000101%40AdobeOrg&AQE=1
+
+[200] image/x-icon (366 bytes)
+  https://learningenglish.voanews.com/Content/responsive/VOA/img/webApp/favicon.ico
+
+[204] text/html (269 bytes)
+  https://ds-aksb-a.akamaihd.net/2/164954/b?dE=95&cS=96&cE=129&rqS=131&rsS=458&rsE=504&sS=103&dl=531&di=2099&fp=1484&dlS=2100&dlE=2171&dc=5597&leS=5598&leE=5607&to=&ol=0&cr=4&mt=&mb=&b=131345&u=https%3A//learningenglish.voanews.com/a/8006750.html&ua=Mozilla/5.0%20%28Linux%3B%20Android%2013%3B%20SM-A135M%29%20AppleWebKit/537.36%20%28KHTML%2C%20like%20Gecko%29%20Chrome/120.0.0.0%20Mobile%20Safari/537.36&pl=Linux%20x86_64&us=&gh=189.247.166.87&t=&rid=10ed1d5a&r=28514&akM=dsca&akN=ae&vc=14:17&bpcip=a06z45uz7&akTX=1&akTI=10ed1d5a&ai=216581&pmgn=&pmgi=&pmp=
+
+[200] application/json (309 bytes)
+  https://rp4.liadm.com/j?dtstmp=1791962470282&did=did-0049&se=eyJzZW5kZXIiOiJkaXNxdXMifQ&duid=8b4c213087a2--01m4wmjnvk4ycasgcw1eypvnjj&tv=v3.19.0&pu=https%3A%2F%2Flearningenglish.voanews.com%2Fa%2F8006750.html&ext_dsq__s=1q43g401pnpsn7&ext_dsq__u=1q43g401pnpsn7&ext__fbp=fb.1.1791962466796.843309570347945928&wpn=lc-bundle&wpv=v3.19.0&cd=.voanews.com&cl=aHR0cHM6Ly9sZWFybmluZ2VuZ2xpc2gudm9hbmV3cy5jb20vYS84MDA2NzUwLmh0bWw&pv=434e7314-7ec1-4687-9531-db547280e15e&i6=MjgwNjoxMGJlOjc6MzY1NDo2OTIyOmFmZTQ6ZmIxNzoxZGEy&n3pc=true
+
+[200] application/json (329 bytes)
+  https://learningenglish.voanews.com/hljson
+
