@@ -40,32 +40,46 @@ function setEstado(tab, msg, tipo) {
   el.style.display = msg ? 'block' : 'none';
 }
 
-// Extrae texto del HTML de una pagina AMP de VOA
-function extraerTexto(html) {
-  try {
-    var doc = new DOMParser().parseFromString(html, 'text/html');
-    doc.querySelectorAll('script, style, noscript').forEach(function(el) {
-      if (el.parentNode) el.parentNode.removeChild(el);
+function limpiarMarkdown(md) {
+  if (!md) return '';
+  // Cortar el encabezado de jina
+  var idx = md.indexOf('Markdown Content:');
+  if (idx >= 0) md = md.slice(idx + 'Markdown Content:'.length);
+
+  // Eliminar imagenes, enlaces, enfasis
+  md = md.replace(/!\[[^\]]*\]\([^)]*\)/g, '');
+  md = md.replace(/\[([^\]]+)\]\([^)]+\)/g, '$1');
+  md = md.replace(/\*\*/g, '').replace(/__/g, '');
+  md = md.replace(/`/g, '');
+  md = md.replace(/^_([^_]+)_$/gm, '$1');
+  md = md.replace(/^\*([^\*]+)\*$/gm, '$1');
+  md = md.replace(/^#{1,6}\s+/gm, '');
+  md = md.replace(/^\s*[\*\-\+]\s+/gm, '');
+
+  // Limpiar lineas
+  var lineas = md.split('\n')
+    .map(function(l) { return l.trim(); })
+    .filter(function(l) {
+      if (!l || l.length < 3) return false;
+      if (!/[A-Za-z\u00c0-\u017f]/.test(l)) return false;
+      // Navegacion
+      if (/^(Skip to|Languages|Search|Previous|Next|Menu|Subscribe|Share|Embed|Direct link|Pop-out player|Advertisement|See comments|See all|See TV|See Radio|Follow Us|About Us|Contact Us|Terms of Use|Accessibility|Load more|Latest|Breaking News|Forum|Episodes|Articles|About|Calendar)$/i.test(l)) return false;
+      // Basura de VOA
+      if (/^(Download Lesson|Your browser doesn|Speaking Practice|Pronunciation|Conversation|Learn the alphabet|Listening Quiz|Quiz - |Start the Quiz|Video|Audio|Video Programs|Audio Programs|Apple Podcasts)$/i.test(l)) return false;
+      // Duraciones
+      if (/^\d{1,2}:\d{2}/.test(l)) return false;
+      if (/^\d+\s*kbps/i.test(l)) return false;
+      // Fechas solas
+      if (/^(January|February|March|April|May|June|July|August|September|October|November|December)\s+\d{1,2},\s+\d{4}$/.test(l)) return false;
+      // Separadores
+      if (/^[-=_\s\*]{3,}$/.test(l)) return false;
+      return true;
     });
-    var art = doc.querySelector('.wsw') ||
-              doc.querySelector('[itemprop="articleBody"]') ||
-              doc.querySelector('.article-content') ||
-              doc.querySelector('#article-content') ||
-              doc.querySelector('article') ||
-              doc.querySelector('main');
-    if (!art) return '';
-    var nodos = art.querySelectorAll('p, h2, h3, h4, h5, blockquote, div:not([class]):not([id])');
-    var lineas = [];
-    var vistos = {};
-    for (var i = 0; i < nodos.length; i++) {
-      var t = (nodos[i].innerText || '').trim();
-      if (!t || t.length < 3) continue;
-      if (!/[A-Za-z\u00c0-\u017f]/.test(t)) continue;
-      if (/^(Download Lesson|Your browser doesn|Speaking Practice|Pronunciation|Conversation|Learn the alphabet|Listening Quiz|Video|Audio)$/i.test(t)) continue;
-      if (vistos[t]) continue;
-      vistos[t] = 1;
-      lineas.push(t);
-    }
-    return lineas.join('\n\n').replace(/\n{3,}/g, '\n\n').trim();
-  } catch (e) { return ''; }
+
+  // Cortar desde "See comments" o "Episodes" si quedaron
+  var texto = lineas.join('\n').replace(/\n{3,}/g, '\n\n').trim();
+  var fin = texto.search(/\n+(See comments|Episodes|Forum)\b/i);
+  if (fin > 300) texto = texto.slice(0, fin).trim();
+
+  return texto;
 }

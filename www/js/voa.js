@@ -99,6 +99,13 @@ function aAmp(url) {
   return url.replace('learningenglish.voanews.com/a/', 'learningenglish.voanews.com/amp/');
 }
 
+async function extraerTextoArticulo(url) {
+  // Usar r.jina.ai con API key para extraer articulo completo
+  var jinaUrl = 'https://r.jina.ai/' + url;
+  var md = await bajar(jinaUrl, true);
+  return limpiarMarkdown(md);
+}
+
 async function cargarVista(tab) {
   var lista = document.getElementById('lista-' + tab);
   if (!lista) return;
@@ -115,15 +122,6 @@ async function cargarVista(tab) {
     var tieneTexto = await existeArchivo(rutas.texto);
     var div = document.createElement('div');
     div.className = 'item';
-
-    var botonExtra = '';
-    if (tab === 'lecciones') {
-      botonExtra = '<button class="texto" data-tab="' + tab + '" data-i="' + i + '">' +
-                   (tieneTexto ? '📖 Texto' : '📄 Bajar txt') + '</button>';
-    } else {
-      botonExtra = '<button class="abrir" data-tab="' + tab + '" data-i="' + i + '">🌐 Leer</button>';
-    }
-
     div.innerHTML =
       '<h3>' + escapeHtml(it.titulo) + '</h3>' +
       '<div class="meta">' + (it.fecha ? formatearFecha(it.fecha) : '') + '</div>' +
@@ -133,7 +131,9 @@ async function cargarVista(tab) {
           (guardado ? '✅ Guardado' : '⬇️ Descargar') +
         '</button>' +
         '<button class="play" data-tab="' + tab + '" data-i="' + i + '">▶️ Audio</button>' +
-        botonExtra +
+        '<button class="texto" data-tab="' + tab + '" data-i="' + i + '">' +
+          (tieneTexto ? '📖 Texto' : '📄 Bajar txt') +
+        '</button>' +
       '</div>' +
       '<div id="rep_' + tab + '_' + i + '"></div>' +
       '<div id="txt_' + tab + '_' + i + '"></div>';
@@ -149,6 +149,7 @@ async function descargarVOA(tab, i, boton) {
   boton.innerHTML = '<span class="spinner"></span> Bajando...';
 
   try {
+    // Audio
     var mp3Url = it.mp3;
     if (!mp3Url && it.pagina) {
       var htmlLeccion = await bajar(aAmp(it.pagina), true);
@@ -159,16 +160,17 @@ async function descargarVOA(tab, i, boton) {
     var base64 = await bajar(mp3Url, false);
     await escribirArchivo(rutas.audio, base64);
 
-    // Solo para lecciones: extraer texto del AMP
-    if (tab === 'lecciones' && it.pagina) {
+    // Texto con jina
+    if (it.pagina) {
       try {
         boton.innerHTML = '<span class="spinner"></span> Texto...';
-        var html = await bajar(aAmp(it.pagina), true);
-        var texto = extraerTexto(html);
-        if (texto && texto.length > 50) {
+        var texto = await extraerTextoArticulo(it.pagina);
+        if (texto && texto.length > 100) {
           await escribirArchivo(rutas.texto, texto, 'utf8');
         }
-      } catch (errTxt) {}
+      } catch (errTxt) {
+        console.log('Texto falló:', errTxt.message);
+      }
     }
 
     boton.classList.add('guardado');
@@ -220,9 +222,8 @@ async function mostrarTextoVOA(tab, i, boton) {
   if (!texto && it.pagina) {
     boton.innerHTML = '<span class="spinner"></span> Bajando...';
     try {
-      var html = await bajar(aAmp(it.pagina), true);
-      texto = extraerTexto(html);
-      if (texto && texto.length > 50) {
+      texto = await extraerTextoArticulo(it.pagina);
+      if (texto && texto.length > 100) {
         await escribirArchivo(rutas.texto, texto, 'utf8');
       }
     } catch (err) { texto = 'Error: ' + err.message; }
@@ -230,19 +231,4 @@ async function mostrarTextoVOA(tab, i, boton) {
   boton.innerHTML = texto ? '📖 Texto' : '📄 Bajar txt';
   cont.innerHTML = '<div class="texto-box">' + escapeHtml(texto || 'No hay texto.') + '</div>';
   boton.disabled = false;
-}
-
-async function abrirEnNavegador(tab, i) {
-  var items = await leerJSON('biblioteca_' + tab + '.json');
-  if (!items || !items[i] || !items[i].pagina) return;
-  var url = items[i].pagina;
-  try {
-    if (Plugins.Browser && Plugins.Browser.open) {
-      await Plugins.Browser.open({ url: url });
-    } else {
-      window.open(url, '_system');
-    }
-  } catch (e) {
-    window.open(url, '_blank');
-  }
 }

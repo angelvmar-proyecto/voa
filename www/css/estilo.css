@@ -38,12 +38,11 @@ header .sub { font-size: 12px; opacity: .85; margin-top: 2px; }
 .item .desc.guardado { background: #16a34a; }
 .item .play { background: #e2e8f0; color: #1e293b; }
 .item .texto { background: #f59e0b; color: #fff; }
-.item .abrir { background: #0891b2; color: #fff; }
 .item audio { width: 100%; margin-top: 8px; }
 .texto-box { background: #fffbeb; border: 1px solid #fcd34d;
              border-radius: 8px; padding: 12px; margin-top: 8px;
              white-space: pre-wrap; line-height: 1.6; font-size: 15px;
-             max-height: 400px; overflow-y: auto; }
+             max-height: 60vh; overflow-y: auto; }
 .vacio { text-align: center; color: #94a3b8; padding: 40px 16px; font-size: 15px; }
 .spinner { display: inline-block; width: 12px; height: 12px;
            border: 2px solid #fff; border-top-color: transparent;

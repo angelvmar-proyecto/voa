@@ -1,3 +1,6 @@
+// ⚠️⚠️⚠️ REEMPLAZA 'PEGA_AQUI_TU_NUEVA_KEY' CON TU API KEY DE JINA.AI ⚠️⚠️⚠️
+var JINA_API_KEY = jina_7106381c738c462b964f4288963870d1HKCWz9z8vrlWkBU6cT01jNV3jWc4 ;
+
 var Plugins = (window.Capacitor && window.Capacitor.Plugins) || {};
 var Filesystem = Plugins.Filesystem;
 var Directory = { Data: 'DATA', Documents: 'DOCUMENTS', Cache: 'CACHE', External: 'EXTERNAL' };
@@ -43,15 +46,24 @@ async function escribirArchivo(nombre, data, encoding) {
 }
 
 async function bajar(url, comoTexto) {
+  var headers = { 'User-Agent': 'Mozilla/5.0' };
+
+  // Si es jina.ai, agregar Authorization
+  if (url.indexOf('r.jina.ai') >= 0 && JINA_API_KEY && JINA_API_KEY.indexOf('PEGA_AQUI') < 0) {
+    headers['Authorization'] = 'Bearer ' + JINA_API_KEY;
+    headers['X-Return-Format'] = 'markdown';
+  }
+
   if (Plugins.CapacitorHttp) {
-    var opts = { url: url, headers: { 'User-Agent': 'Mozilla/5.0' } };
+    var opts = { url: url, headers: headers };
     if (!comoTexto) opts.responseType = 'arraybuffer';
     var r = await Plugins.CapacitorHttp.get(opts);
     if (r.status >= 400) throw new Error('HTTP ' + r.status);
     if (comoTexto) return typeof r.data === 'string' ? r.data : JSON.stringify(r.data);
     return r.data;
   }
-  var res = await fetch(url);
+
+  var res = await fetch(url, { headers: headers });
   if (!res.ok) throw new Error('HTTP ' + res.status);
   return comoTexto ? await res.text() : await res.arrayBuffer();
 }
