@@ -100,9 +100,14 @@ function aAmp(url) {
 }
 
 async function extraerTextoArticulo(url) {
-  // Usar r.jina.ai con API key para extraer articulo completo
   var jinaUrl = 'https://r.jina.ai/' + url;
   var md = await bajar(jinaUrl, true);
+
+  // Guardar crudo para diagnostico
+  try {
+    await escribirArchivo('jina_crudo.txt', md || '(vacio)', 'utf8');
+  } catch (e) {}
+
   return limpiarMarkdown(md);
 }
 
