@@ -1,5 +1,5 @@
 var PAGINA_INDICE_LECCIONES = 'https://learningenglish.voanews.com/p/5644.html';
-var FEED_ENTREVISTAS = 'https://learningenglish.voanews.com/podcast/?zoneId=1579';
+var FEED_ENTREVISTAS = 'https://learningenglish.voanews.com/podcast/?zoneId=987';
 
 function extraerLeccionesDeIndice(html) {
   var doc = new DOMParser().parseFromString(html, 'text/html');

@@ -15,7 +15,7 @@
 
 <div class="tabs">
   <button id="tab-lecciones" class="activo" onclick="cambiarTab('lecciones')">📚 Let's Learn</button>
-  <button id="tab-entrevistas" onclick="cambiarTab('entrevistas')">🎤 Entrevistas</button>
+  <button id="tab-words" onclick="cambiarTab('words')">📚 Words & Stories</button>
   <button id="tab-turismo" onclick="cambiarTab('turismo')">🌴 Turismo</button>
 </div>
 
@@ -30,14 +30,14 @@
   <div id="lista-lecciones"><div class="vacio">Toca "Cargar lista" para empezar</div></div>
 </div>
 
-<div id="contenido-entrevistas" class="contenido">
+<div id="contenido-words" class="contenido">
   <div class="barra">
-    <button onclick="actualizarBiblioteca('entrevistas')">🔄 Actualizar biblioteca</button>
-    <button class="sec" onclick="borrarBiblioteca('entrevistas')">🗑️</button>
-    <button class="sec" onclick="borrarTextos('entrevistas')" title="Borrar textos">🧹</button>
+    <button onclick="actualizarBiblioteca('words')">🔄 Actualizar biblioteca</button>
+    <button class="sec" onclick="borrarBiblioteca('words')">🗑️</button>
+    <button class="sec" onclick="borrarTextos('words')" title="Borrar textos">🧹</button>
   </div>
-  <div id="estado-entrevistas" style="display:none"></div>
-  <div id="lista-entrevistas"><div class="vacio">Toca "Actualizar biblioteca" para empezar</div></div>
+  <div id="estado-words" style="display:none"></div>
+  <div id="lista-words"><div class="vacio">Toca "Actualizar biblioteca" para empezar</div></div>
 </div>
 
 <div id="contenido-turismo" class="contenido">

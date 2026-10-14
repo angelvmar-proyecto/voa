@@ -119,11 +119,17 @@ function limpiarMarkdownJina(md, tituloArticulo) {
     l = l.replace(/^[#>\*\-\+\s]+/, '');
     l = l.replace(/\[([^\]]+)\]\([^)]+\)/g, '$1');
     l = l.replace(/!\[[^\]]*\]\([^)]*\)/g, '');
-    l = l.replace(/\*\*/g, '').replace(/__/g, '').replace(/`/g, '').trim();
+    l = l.replace(/\*\*/g, '').replace(/__/g, '').replace(/`/g, '');
+    // Quitar cursivas _texto_ y *texto*
+    l = l.replace(/^_([^_]+)_$/, '$1');
+    l = l.replace(/^\*([^\*]+)\*$/, '$1');
+    l = l.trim();
 
     if (!l || l.length < 3) continue;
     if (esBasura(l)) continue;
     if (/^[-=_\s\*]{3,}$/.test(l)) continue;
+    // Quitar separadores tipo ______ (varios underscores)
+    if (/^_{3,}$/.test(l)) continue;
     if (vistos[l]) continue;
     vistos[l] = 1;
 
