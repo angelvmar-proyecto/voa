@@ -4,7 +4,7 @@
 // =====================================================================
 
 var DESCARGAS = {
-  BASE: '/storage/emulated/0/Download/MiInglesVOA',  // ruta absoluta
+  BASE: 'MiInglesVOA',  // ruta relativa dentro de ExternalStorage
   PROGRESO: 'progreso_descargas.json',
   FEEDS_CACHE: 'feeds_voa.json',
   pausa: false,
