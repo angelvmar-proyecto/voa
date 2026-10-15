@@ -1,13 +1,37 @@
 // =====================================================================
-// VOA - Let's Learn y Words & Stories
+// VOA - Todos los programas
 // Usa HTTP simple + ?withmediaplayer=1
-// Sin Jina, sin WebView, sin Chromium
 // =====================================================================
 
 var PAGINA_INDICE_LECCIONES = 'https://learningenglish.voanews.com/p/5644.html';
-var FEED_WORDS = 'https://learningenglish.voanews.com/api/zmypyl-vomx-tpeyry_';
 
-// Extrae las 52 lecciones de la pagina indice de Let's Learn
+// Lista de programas con sus feeds
+var PROGRAMAS = [
+  { id: 'lecciones',           nombre: "📚 Let's Learn",       tipo: 'indice', url: PAGINA_INDICE_LECCIONES },
+  { id: 'words',               nombre: "📖 Words & Stories",   tipo: 'feed',   url: 'https://learningenglish.voanews.com/api/zmypyl-vomx-tpeyry_' },
+  { id: 'science',             nombre: "🔬 Science & Tech",    tipo: 'feed',   url: 'https://learningenglish.voanews.com/api/zmg_pl-vomx-tpeymtm' },
+  { id: 'grammar',             nombre: "📝 Everyday Grammar",  tipo: 'feed',   url: 'https://learningenglish.voanews.com/api/zoroqql-vomx-tpeptpqq' },
+  { id: 'teacher',             nombre: "🎯 Ask a Teacher",     tipo: 'feed',   url: 'https://learningenglish.voanews.com/api/zti_qvl-vomx-tpekgvqr' },
+  { id: 'american_stories',    nombre: "📚 American Stories",  tipo: 'feed',   url: 'https://learningenglish.voanews.com/api/zyg__l-vomx-tpetmty' },
+  { id: 'us_history',          nombre: "🇺🇸 U.S. History",     tipo: 'feed',   url: 'https://learningenglish.voanews.com/api/zj_pvl-vomx-tpebb_v' },
+  { id: 'presidents',          nombre: "🏛️ America's Presidents", tipo: 'feed', url: 'https://learningenglish.voanews.com/api/zjypq_l-vomx-tpebryqy' },
+  { id: 'arts',                nombre: "🎨 Arts & Culture",    tipo: 'feed',   url: 'https://learningenglish.voanews.com/api/zpyp_l-vomx-tpe_rym' },
+  { id: 'health',              nombre: "💚 Health & Lifestyle", tipo: 'feed',  url: 'https://learningenglish.voanews.com/api/zmmpql-vomx-tpey-_q' },
+  { id: 'as_it_is',            nombre: "🌍 As It Is",          tipo: 'feed',   url: 'https://learningenglish.voanews.com/api/zkm-ql-vomx-tpej-rqi' }
+];
+
+// Busca la config de un programa por id
+function getPrograma(tab) {
+  for (var i = 0; i < PROGRAMAS.length; i++) {
+    if (PROGRAMAS[i].id === tab) return PROGRAMAS[i];
+  }
+  return null;
+}
+
+// =====================================================================
+// PARSEO
+// =====================================================================
+
 function extraerLeccionesDeIndice(html) {
   var doc = new DOMParser().parseFromString(html, 'text/html');
   var lecciones = [];
@@ -32,7 +56,6 @@ function extraerLeccionesDeIndice(html) {
   return lecciones;
 }
 
-// Parsea un feed RSS y devuelve la lista de episodios
 function parsearRSS(xml) {
   var items = xml.match(/<item[\s>][\s\S]*?<\/item>/g) || [];
   var episodios = [];
@@ -48,7 +71,7 @@ function parsearRSS(xml) {
       fecha: pub ? decodificarEntidades(pub[1]) : ''
     });
   }
-  // Deduplicar por titulo
+  // Deduplicar por titulo (preferir URLs con slug)
   var vistos = {};
   var unicos = [];
   for (var j = 0; j < episodios.length; j++) {
@@ -70,15 +93,41 @@ function parsearRSS(xml) {
   return unicos;
 }
 
-// Agrega el parametro magico a la URL
+// =====================================================================
+// HELPERS
+// =====================================================================
+
 function urlConMediaplayer(url) {
   if (!url) return url;
   if (url.indexOf('?withmediaplayer=1') >= 0) return url;
   return url + (url.indexOf('?') >= 0 ? '&' : '?') + 'withmediaplayer=1';
 }
 
-// Carga la lista de episodios de una pestaña (lecciones o words)
+function slugArchivo(titulo) {
+  if (!titulo) return 'audio';
+  return titulo
+    .replace(/[\/\\:*?"<>|]/g, '')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .slice(0, 100) || 'audio';
+}
+
+function rutasPara(tab, titulo) {
+  var slug = slugArchivo(titulo);
+  return {
+    audio: CARPETA_AUDIOS + tab + '/' + slug + '.mp3',
+    texto: CARPETA_TEXTOS + tab + '/' + slug + '.txt'
+  };
+}
+
+// =====================================================================
+// BIBLIOTECA (cargar lista de episodios)
+// =====================================================================
+
 async function actualizarBiblioteca(tab) {
+  var prog = getPrograma(tab);
+  if (!prog) { alert('Programa desconocido: ' + tab); return; }
+  
   var boton = document.querySelector('#contenido-' + tab + ' .barra button');
   if (boton) boton.disabled = true;
   var textoOriginal = boton ? boton.innerHTML : '';
@@ -87,13 +136,13 @@ async function actualizarBiblioteca(tab) {
 
   try {
     var items;
-    if (tab === 'lecciones') {
-      var html = await bajar(PAGINA_INDICE_LECCIONES, true);
+    if (prog.tipo === 'indice') {
+      var html = await bajar(prog.url, true);
       items = extraerLeccionesDeIndice(html);
       if (!items.length) throw new Error('No se encontraron lecciones');
     } else {
-      var sep = FEED_WORDS.indexOf('?') >= 0 ? '&' : '?';
-      var url = FEED_WORDS + sep + '_=' + Date.now();
+      var sep = prog.url.indexOf('?') >= 0 ? '&' : '?';
+      var url = prog.url + sep + '_=' + Date.now();
       var xml = await bajar(url, true);
       items = parsearRSS(xml);
       if (!items.length) throw new Error('El feed no tiene episodios');
@@ -108,26 +157,10 @@ async function actualizarBiblioteca(tab) {
   }
 }
 
-// Genera el slug del archivo (nombre legible sin caracteres prohibidos)
-function slugArchivo(titulo) {
-  if (!titulo) return 'audio';
-  return titulo
-    .replace(/[\/\\:*?"<>|]/g, '')   // quitar caracteres prohibidos en nombres de archivo
-    .replace(/\s+/g, ' ')            // espacios multiples a uno
-    .trim()
-    .slice(0, 100) || 'audio';
-}
+// =====================================================================
+// DESCARGAR
+// =====================================================================
 
-// Calcula las rutas de audio y texto para una pestaña + titulo
-function rutasPara(tab, titulo) {
-  var slug = slugArchivo(titulo);
-  return {
-    audio: CARPETA_AUDIOS + tab + '/' + slug + '.mp3',
-    texto: CARPETA_TEXTOS + tab + '/' + slug + '.txt'
-  };
-}
-
-// Descarga audio + texto de un episodio
 async function descargarVOA(tab, i, boton) {
   var items = await leerJSON('biblioteca_' + tab + '.json');
   var it = items[i];
@@ -136,22 +169,17 @@ async function descargarVOA(tab, i, boton) {
   boton.innerHTML = '<span class="spinner"></span> Bajando...';
 
   try {
-    // 1) Traer HTML con el parametro magico
     var url = urlConMediaplayer(it.pagina);
     var html = await bajar(url, true);
-
-    // 2) Extraer datos (texto + mp3) usando la funcion de utils
     var datos = extraerDeHtml(html);
     var mp3Url = datos.mp3_128 || datos.mp3_64;
 
-    if (!mp3Url) throw new Error('No se encontró MP3 en la página');
+    if (!mp3Url) throw new Error('No se encontró MP3');
 
-    // 3) Descargar MP3
     boton.innerHTML = '<span class="spinner"></span> Audio...';
     var base64 = await bajar(mp3Url, false);
     await escribirArchivo(rutas.audio, base64);
 
-    // 4) Guardar texto si existe
     if (datos.texto && datos.texto.length > 200) {
       boton.innerHTML = '<span class="spinner"></span> Texto...';
       await escribirArchivo(rutas.texto, datos.texto, 'utf8');
@@ -164,20 +192,20 @@ async function descargarVOA(tab, i, boton) {
   } catch (err) {
     boton.innerHTML = '❌ Reintentar';
     boton.disabled = false;
-    console.error('Error descargando:', err);
     alert('Error: ' + err.message);
   }
 }
 
-// Muestra u oculta el reproductor de audio
+// =====================================================================
+// REPRODUCIR
+// =====================================================================
+
 async function reproducirVOA(tab, i, boton) {
   var cont = document.getElementById('rep_' + tab + '_' + i);
   if (cont.innerHTML) { cont.innerHTML = ''; boton.innerHTML = '▶️ Audio'; return; }
-
   var items = await leerJSON('biblioteca_' + tab + '.json');
   var it = items[i];
   var rutas = rutasPara(tab, it.titulo);
-
   boton.disabled = true;
   try {
     var src;
@@ -198,19 +226,18 @@ async function reproducirVOA(tab, i, boton) {
   boton.disabled = false;
 }
 
-// Muestra u oculta el texto del episodio
+// =====================================================================
+// TEXTO
+// =====================================================================
+
 async function mostrarTextoVOA(tab, i, boton) {
   var cont = document.getElementById('txt_' + tab + '_' + i);
   if (cont.innerHTML) { cont.innerHTML = ''; return; }
-
   var items = await leerJSON('biblioteca_' + tab + '.json');
   var it = items[i];
   var rutas = rutasPara(tab, it.titulo);
-
   boton.disabled = true;
   var texto = await leerTexto(rutas.texto);
-
-  // Si no hay texto guardado, intentar extraerlo ahora
   if (!texto && it.pagina) {
     boton.innerHTML = '<span class="spinner"></span> Extrayendo...';
     try {
@@ -221,17 +248,17 @@ async function mostrarTextoVOA(tab, i, boton) {
         texto = datos.texto;
         await escribirArchivo(rutas.texto, texto, 'utf8');
       }
-    } catch (err) {
-      console.error('Error texto:', err);
-    }
+    } catch (err) { console.error(err); }
   }
-
   boton.innerHTML = texto ? '📖 Texto' : '📄 Bajar txt';
-  cont.innerHTML = '<div class="texto-box">' + escapeHtml(texto || 'No hay texto disponible para este episodio.') + '</div>';
+  cont.innerHTML = '<div class="texto-box">' + escapeHtml(texto || 'No hay texto disponible.') + '</div>';
   boton.disabled = false;
 }
 
-// Borra todos los textos de una pestaña
+// =====================================================================
+// BORRAR TEXTOS
+// =====================================================================
+
 async function borrarTextos(tab) {
   if (!confirm('¿Borrar TODOS los textos de esta pestaña?')) return;
   var items = await leerJSON('biblioteca_' + tab + '.json');
@@ -250,7 +277,10 @@ async function borrarTextos(tab) {
   setEstado(tab, '✅ ' + n + ' textos borrados.', 'ok');
 }
 
-// Renderiza la lista de episodios en pantalla
+// =====================================================================
+// VISTA (renderizar lista)
+// =====================================================================
+
 async function cargarVista(tab) {
   var lista = document.getElementById('lista-' + tab);
   if (!lista) return;

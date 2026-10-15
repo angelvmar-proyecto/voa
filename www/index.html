@@ -13,18 +13,26 @@
   <div class="sub">por MAR Caribe · Cancún</div>
 </header>
 
-<div class="tabs">
+<div class="tabs" id="tabs-container">
   <button id="tab-lecciones" class="activo" onclick="cambiarTab('lecciones')">📚 Let's Learn</button>
-  <button id="tab-words" onclick="cambiarTab('words')">📚 Words & Stories</button>
+  <button id="tab-words" onclick="cambiarTab('words')">📖 Words & Stories</button>
+  <button id="tab-science" onclick="cambiarTab('science')">🔬 Science & Tech</button>
+  <button id="tab-grammar" onclick="cambiarTab('grammar')">📝 Everyday Grammar</button>
+  <button id="tab-teacher" onclick="cambiarTab('teacher')">🎯 Ask a Teacher</button>
+  <button id="tab-american_stories" onclick="cambiarTab('american_stories')">📚 American Stories</button>
+  <button id="tab-us_history" onclick="cambiarTab('us_history')">🇺🇸 U.S. History</button>
+  <button id="tab-presidents" onclick="cambiarTab('presidents')">🏛️ America's Presidents</button>
+  <button id="tab-arts" onclick="cambiarTab('arts')">🎨 Arts & Culture</button>
+  <button id="tab-health" onclick="cambiarTab('health')">💚 Health & Lifestyle</button>
+  <button id="tab-as_it_is" onclick="cambiarTab('as_it_is')">🌍 As It Is</button>
   <button id="tab-turismo" onclick="cambiarTab('turismo')">🌴 Turismo</button>
-  <button id="tab-descargas" onclick="cambiarTab('descargas')">📥 Descargar</button>
 </div>
 
 <div id="contenido-lecciones" class="contenido activo">
   <div class="barra">
     <button onclick="actualizarBiblioteca('lecciones')">🔄 Cargar lista</button>
     <button class="sec" onclick="borrarTextos('lecciones')" title="Borrar textos">🧹</button>
-    <button class="sec" id="btn-exportar" onclick="exportarDescargas()" title="Exportar a Documents">📤</button>
+    <button class="sec" onclick="exportarDescargas()" title="Exportar a Documents">📤</button>
   </div>
   <div id="estado-lecciones" style="display:none"></div>
   <div id="lista-lecciones"><div class="vacio">Toca "Cargar lista"</div></div>
@@ -34,10 +42,100 @@
   <div class="barra">
     <button onclick="actualizarBiblioteca('words')">🔄 Actualizar lista</button>
     <button class="sec" onclick="borrarTextos('words')" title="Borrar textos">🧹</button>
+    <button class="sec" onclick="exportarDescargas()" title="Exportar a Documents">📤</button>
   </div>
   <div id="estado-words" style="display:none"></div>
   <div id="lista-words"><div class="vacio">Toca "Actualizar lista"</div></div>
-  <div id="exportar-info" style="display:none; padding: 8px; font-size: 12px; color: #666; margin-top: 8px;"></div>
+</div>
+
+<div id="contenido-science" class="contenido">
+  <div class="barra">
+    <button onclick="actualizarBiblioteca('science')">🔄 Actualizar lista</button>
+    <button class="sec" onclick="borrarTextos('science')" title="Borrar textos">🧹</button>
+    <button class="sec" onclick="exportarDescargas()" title="Exportar a Documents">📤</button>
+  </div>
+  <div id="estado-science" style="display:none"></div>
+  <div id="lista-science"><div class="vacio">Toca "Actualizar lista"</div></div>
+</div>
+
+<div id="contenido-grammar" class="contenido">
+  <div class="barra">
+    <button onclick="actualizarBiblioteca('grammar')">🔄 Actualizar lista</button>
+    <button class="sec" onclick="borrarTextos('grammar')" title="Borrar textos">🧹</button>
+    <button class="sec" onclick="exportarDescargas()" title="Exportar a Documents">📤</button>
+  </div>
+  <div id="estado-grammar" style="display:none"></div>
+  <div id="lista-grammar"><div class="vacio">Toca "Actualizar lista"</div></div>
+</div>
+
+<div id="contenido-teacher" class="contenido">
+  <div class="barra">
+    <button onclick="actualizarBiblioteca('teacher')">🔄 Actualizar lista</button>
+    <button class="sec" onclick="borrarTextos('teacher')" title="Borrar textos">🧹</button>
+    <button class="sec" onclick="exportarDescargas()" title="Exportar a Documents">📤</button>
+  </div>
+  <div id="estado-teacher" style="display:none"></div>
+  <div id="lista-teacher"><div class="vacio">Toca "Actualizar lista"</div></div>
+</div>
+
+<div id="contenido-american_stories" class="contenido">
+  <div class="barra">
+    <button onclick="actualizarBiblioteca('american_stories')">🔄 Actualizar lista</button>
+    <button class="sec" onclick="borrarTextos('american_stories')" title="Borrar textos">🧹</button>
+    <button class="sec" onclick="exportarDescargas()" title="Exportar a Documents">📤</button>
+  </div>
+  <div id="estado-american_stories" style="display:none"></div>
+  <div id="lista-american_stories"><div class="vacio">Toca "Actualizar lista"</div></div>
+</div>
+
+<div id="contenido-us_history" class="contenido">
+  <div class="barra">
+    <button onclick="actualizarBiblioteca('us_history')">🔄 Actualizar lista</button>
+    <button class="sec" onclick="borrarTextos('us_history')" title="Borrar textos">🧹</button>
+    <button class="sec" onclick="exportarDescargas()" title="Exportar a Documents">📤</button>
+  </div>
+  <div id="estado-us_history" style="display:none"></div>
+  <div id="lista-us_history"><div class="vacio">Toca "Actualizar lista"</div></div>
+</div>
+
+<div id="contenido-presidents" class="contenido">
+  <div class="barra">
+    <button onclick="actualizarBiblioteca('presidents')">🔄 Actualizar lista</button>
+    <button class="sec" onclick="borrarTextos('presidents')" title="Borrar textos">🧹</button>
+    <button class="sec" onclick="exportarDescargas()" title="Exportar a Documents">📤</button>
+  </div>
+  <div id="estado-presidents" style="display:none"></div>
+  <div id="lista-presidents"><div class="vacio">Toca "Actualizar lista"</div></div>
+</div>
+
+<div id="contenido-arts" class="contenido">
+  <div class="barra">
+    <button onclick="actualizarBiblioteca('arts')">🔄 Actualizar lista</button>
+    <button class="sec" onclick="borrarTextos('arts')" title="Borrar textos">🧹</button>
+    <button class="sec" onclick="exportarDescargas()" title="Exportar a Documents">📤</button>
+  </div>
+  <div id="estado-arts" style="display:none"></div>
+  <div id="lista-arts"><div class="vacio">Toca "Actualizar lista"</div></div>
+</div>
+
+<div id="contenido-health" class="contenido">
+  <div class="barra">
+    <button onclick="actualizarBiblioteca('health')">🔄 Actualizar lista</button>
+    <button class="sec" onclick="borrarTextos('health')" title="Borrar textos">🧹</button>
+    <button class="sec" onclick="exportarDescargas()" title="Exportar a Documents">📤</button>
+  </div>
+  <div id="estado-health" style="display:none"></div>
+  <div id="lista-health"><div class="vacio">Toca "Actualizar lista"</div></div>
+</div>
+
+<div id="contenido-as_it_is" class="contenido">
+  <div class="barra">
+    <button onclick="actualizarBiblioteca('as_it_is')">🔄 Actualizar lista</button>
+    <button class="sec" onclick="borrarTextos('as_it_is')" title="Borrar textos">🧹</button>
+    <button class="sec" onclick="exportarDescargas()" title="Exportar a Documents">📤</button>
+  </div>
+  <div id="estado-as_it_is" style="display:none"></div>
+  <div id="lista-as_it_is"><div class="vacio">Toca "Actualizar lista"</div></div>
 </div>
 
 <div id="contenido-turismo" class="contenido">
@@ -59,33 +157,8 @@
 <script src="js/utils.js"></script>
 <script src="js/voa.js"></script>
 <script src="js/turismo.js"></script>
-<script src="js/descargas.js"></script>
 <script src="js/exportar.js"></script>
 <script src="js/app.js"></script>
-
-<div id="contenido-descargas" class="contenido">
-  <div class="barra">
-    <button id="btn-iniciar-descarga" onclick="iniciarDescargaSeleccionada()">📥 Iniciar descarga</button>
-    <button id="btn-pausa-descarga" onclick="pausarDescarga()" style="display:none">⏸ Pausar</button>
-    <button class="sec" onclick="cancelarDescarga()" title="Cancelar">❌</button>
-    <button class="sec" onclick="abrirAjustesPermisos()" title="Dar permisos">🔓</button>
-    <button class="sec" onclick="diagnosticarEstructura()" title="Ver archivos">🔍</button>
-  </div>
-
-  <div class="info">
-    <p>Selecciona los programas a descargar. Se guardará en:</p>
-    <code>/Documents/MiInglesVOA/</code>
-  </div>
-
-  <h3>Programas disponibles</h3>
-  <div id="lista-programas"></div>
-
-  <h3>Progreso</h3>
-  <div id="progreso-programas"></div>
-
-  <h3>Log de descarga</h3>
-  <div id="descarga-log" class="log-panel">(Sin actividad)</div>
-</div>
 
 </body>
 </html>

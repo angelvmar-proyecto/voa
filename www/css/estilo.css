@@ -109,3 +109,23 @@ h3 {
   overflow-y: auto;
   line-height: 1.4;
 }
+
+/* ===== Scroll horizontal en las pestañas ===== */
+.tabs {
+  overflow-x: auto;
+  overflow-y: hidden;
+  white-space: nowrap;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+}
+.tabs::-webkit-scrollbar {
+  height: 4px;
+}
+.tabs::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 2px;
+}
+.tabs button {
+  flex: 0 0 auto;
+  min-width: fit-content;
+}
