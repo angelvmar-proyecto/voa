@@ -59,6 +59,47 @@ document.addEventListener('click', async function(e) {
   else if (boton.classList.contains('texto')) {
     await mostrarTextoVOA(boton.dataset.tab, parseInt(boton.dataset.i, 10), boton);
   }
+  // Botón Marcar leído
+  else if (boton.classList.contains('leido')) {
+    var tab = boton.dataset.tab;
+    var titulo = boton.dataset.titulo;
+    var ahoraLeido = await toggleLeido(tab, titulo);
+    
+    // Actualizar visualmente el botón sin recargar todo
+    if (ahoraLeido) {
+      boton.classList.add('es-leido');
+      boton.innerHTML = '✅ Leído';
+      // Marcar la tarjeta como leída
+      var card = boton.closest('.item');
+      if (card) card.classList.add('item-leido');
+    } else {
+      boton.classList.remove('es-leido');
+      boton.innerHTML = '⬜ Marcar leído';
+      var card2 = boton.closest('.item');
+      if (card2) card2.classList.remove('item-leido');
+    }
+    
+    // Actualizar contadores del filtro (sin recargar la lista completa)
+    // Lo mas simple: recargar la vista
+    // Pero solo si el filtro actual es 'no_leidos' o 'leidos' (porque cambia la visibilidad)
+    var filtroActual = getFiltro(tab);
+    if (filtroActual !== 'todos') {
+      await cargarVista(tab);
+    } else {
+      // Actualizar solo el contador en los botones de filtro
+      var items = await leerJSON('biblioteca_' + tab + '.json');
+      var leidos = await cargarLeidos(tab);
+      var totalLeidos = 0;
+      for (var k = 0; k < items.length; k++) {
+        if (leidos.indexOf(items[k].titulo) >= 0) totalLeidos++;
+      }
+      var noLeidos = items.length - totalLeidos;
+      var filtros = document.querySelectorAll('#lista-' + tab + ' .filtro');
+      if (filtros[0]) filtros[0].innerHTML = 'Todos (' + items.length + ')';
+      if (filtros[1]) filtros[1].innerHTML = 'No leídos (' + noLeidos + ')';
+      if (filtros[2]) filtros[2].innerHTML = 'Leídos (' + totalLeidos + ')';
+    }
+  }
   // Botón Reproducir local (Turismo)
   else if (boton.classList.contains('play-local')) {
     await reproducirLocal(parseInt(boton.dataset.i, 10), boton);

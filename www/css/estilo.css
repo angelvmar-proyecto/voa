@@ -129,3 +129,64 @@ h3 {
   flex: 0 0 auto;
   min-width: fit-content;
 }
+
+/* ===== Filtros (Todos / No leídos / Leídos) ===== */
+.filtros {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 12px;
+  overflow-x: auto;
+  padding-bottom: 4px;
+}
+.filtros .filtro {
+  flex: 0 0 auto;
+  background: #e2e8f0;
+  color: #475569;
+  border: 0;
+  border-radius: 20px;
+  padding: 8px 16px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.filtros .filtro.activo {
+  background: #2563eb;
+  color: #fff;
+}
+
+/* ===== Botón Marcar leído ===== */
+.item .leido {
+  background: #f1f5f9;
+  color: #475569;
+  border: 1px solid #cbd5e1;
+}
+.item .leido.es-leido {
+  background: #dcfce7;
+  color: #166534;
+  border-color: #86efac;
+}
+
+/* ===== Item leído (fondo suave) ===== */
+.item.item-leido {
+  background: #f8fafc;
+  opacity: 0.85;
+}
+
+/* ===== Botón sin texto (deshabilitado) ===== */
+.item .texto.sin-texto {
+  background: #e2e8f0;
+  color: #94a3b8;
+  cursor: not-allowed;
+}
+
+/* ===== Aviso sin texto ===== */
+.aviso-sin-texto {
+  font-size: 11px;
+  color: #94a3b8;
+  font-style: italic;
+  margin-top: 6px;
+  padding: 4px 8px;
+  background: #f8fafc;
+  border-radius: 4px;
+}

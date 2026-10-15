@@ -284,34 +284,96 @@ async function borrarTextos(tab) {
 async function cargarVista(tab) {
   var lista = document.getElementById('lista-' + tab);
   if (!lista) return;
+  
   var items = await leerJSON('biblioteca_' + tab + '.json');
   if (!items || !items.length) {
     lista.innerHTML = '<div class="vacio">Sin elementos. Toca el botón de arriba.</div>';
     return;
   }
-  lista.innerHTML = '';
-  for (var i = 0; i < items.length; i++) {
-    var it = items[i];
+  
+  // Cargar leidos y filtro
+  var leidos = await cargarLeidos(tab);
+  var filtro = getFiltro(tab);
+  
+  // Aplicar filtro
+  var itemsFiltrados = items.filter(function(it, idx) {
+    var esLeido = leidos.indexOf(it.titulo) >= 0;
+    if (filtro === 'no_leidos') return !esLeido;
+    if (filtro === 'leidos') return esLeido;
+    return true;
+  });
+  
+  // Contadores
+  var totalLeidos = 0;
+  for (var k = 0; k < items.length; k++) {
+    if (leidos.indexOf(items[k].titulo) >= 0) totalLeidos++;
+  }
+  var noLeidos = items.length - totalLeidos;
+  
+  // Armar HTML
+  var html = '';
+  
+  // Filtros
+  html += '<div class="filtros">';
+  html += '<button class="filtro ' + (filtro === 'todos' ? 'activo' : '') + '" onclick="cambiarFiltro(\'' + tab + '\', \'todos\')">Todos (' + items.length + ')</button>';
+  html += '<button class="filtro ' + (filtro === 'no_leidos' ? 'activo' : '') + '" onclick="cambiarFiltro(\'' + tab + '\', \'no_leidos\')">No leídos (' + noLeidos + ')</button>';
+  html += '<button class="filtro ' + (filtro === 'leidos' ? 'activo' : '') + '" onclick="cambiarFiltro(\'' + tab + '\', \'leidos\')">Leídos (' + totalLeidos + ')</button>';
+  html += '</div>';
+  
+  if (!itemsFiltrados.length) {
+    html += '<div class="vacio">No hay episodios en este filtro.</div>';
+    lista.innerHTML = html;
+    return;
+  }
+  
+  // Iterar episodios filtrados
+  for (var j = 0; j < itemsFiltrados.length; j++) {
+    var it = itemsFiltrados[j];
+    var iOrig = items.indexOf(it);
     var rutas = rutasPara(tab, it.titulo);
     var guardado = await existeArchivo(rutas.audio);
-    var tieneTexto = await existeArchivo(rutas.texto);
-    var div = document.createElement('div');
-    div.className = 'item';
-    div.innerHTML =
-      '<h3>' + escapeHtml(it.titulo) + '</h3>' +
-      '<div class="meta">' + (it.fecha ? formatearFecha(it.fecha) : '') + '</div>' +
-      '<div class="acciones">' +
-        '<button class="desc ' + (guardado ? 'guardado' : '') + '" ' +
-                'data-tab="' + tab + '" data-i="' + i + '">' +
-          (guardado ? '✅ Guardado' : '⬇️ Descargar') +
-        '</button>' +
-        '<button class="play" data-tab="' + tab + '" data-i="' + i + '">▶️ Audio</button>' +
-        '<button class="texto" data-tab="' + tab + '" data-i="' + i + '">' +
-          (tieneTexto ? '📖 Texto' : '📄 Bajar txt') +
-        '</button>' +
-      '</div>' +
-      '<div id="rep_' + tab + '_' + i + '"></div>' +
-      '<div id="txt_' + tab + '_' + i + '"></div>';
-    lista.appendChild(div);
+    var tieneTextoGuardado = await existeArchivo(rutas.texto);
+    var esLeido = leidos.indexOf(it.titulo) >= 0;
+    var tieneT = tieneSlug(it.pagina);
+    
+    // Boton de texto
+    var botonTexto;
+    if (tieneTextoGuardado) {
+      botonTexto = '<button class="texto" data-tab="' + tab + '" data-i="' + iOrig + '">📖 Texto</button>';
+    } else if (tieneT) {
+      botonTexto = '<button class="texto" data-tab="' + tab + '" data-i="' + iOrig + '">📄 Bajar txt</button>';
+    } else {
+      botonTexto = '<button class="texto sin-texto" disabled title="VOA no publicó transcripción">📄 Sin texto</button>';
+    }
+    
+    // Aviso de sin texto
+    var avisoSinTexto = '';
+    if (!tieneT && !tieneTextoGuardado) {
+      avisoSinTexto = '<div class="aviso-sin-texto">VOA no publicó transcripción para este episodio</div>';
+    }
+    
+    html += '<div class="item ' + (esLeido ? 'item-leido' : '') + '">';
+    html += '<h3>' + escapeHtml(it.titulo) + '</h3>';
+    html += '<div class="meta">' + (it.fecha ? formatearFecha(it.fecha) : '') + '</div>';
+    html += '<div class="acciones">';
+    html += '<button class="desc ' + (guardado ? 'guardado' : '') + '" data-tab="' + tab + '" data-i="' + iOrig + '">' + (guardado ? '✅ Guardado' : '⬇️ Descargar') + '</button>';
+    html += '<button class="play" data-tab="' + tab + '" data-i="' + iOrig + '">▶️ Audio</button>';
+    html += botonTexto;
+    html += '</div>';
+    html += '<div class="acciones">';
+    html += '<button class="leido ' + (esLeido ? 'es-leido' : '') + '" data-tab="' + tab + '" data-i="' + iOrig + '" data-titulo="' + escapeHtml(it.titulo) + '">' + (esLeido ? '✅ Leído' : '⬜ Marcar leído') + '</button>';
+    html += '</div>';
+    html += avisoSinTexto;
+    html += '<div id="rep_' + tab + '_' + iOrig + '"></div>';
+    html += '<div id="txt_' + tab + '_' + iOrig + '"></div>';
+    html += '</div>';
   }
+  
+  lista.innerHTML = html;
+}
+
+// Cambia el filtro activo y recarga la vista
+function cambiarFiltro(tab, valor) {
+  setFiltro(tab, valor);
+  cargarVista(tab);
 }

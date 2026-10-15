@@ -154,3 +154,67 @@ function extraerDeHtml(html) {
 
   return resultado;
 }
+
+// =====================================================================
+// LEIDO / NO LEIDO
+// =====================================================================
+
+// Detecta si una URL tendra texto (las URLs con slug normalmente si)
+function tieneSlug(url) {
+  if (!url) return false;
+  return /\/a\/[a-z0-9-]+\//.test(url);
+}
+
+// Carga la lista de leidos de una pestana
+async function cargarLeidos(tab) {
+  try {
+    var r = await getFilesystem().readFile({
+      path: 'leidos_' + tab + '.json',
+      directory: Directory.External,
+      encoding: 'utf8',
+      recursive: true
+    });
+    return JSON.parse(r.data);
+  } catch (e) {
+    return [];
+  }
+}
+
+// Guarda la lista de leidos de una pestana
+async function guardarLeidos(tab, leidos) {
+  try {
+    await getFilesystem().writeFile({
+      path: 'leidos_' + tab + '.json',
+      data: JSON.stringify(leidos),
+      directory: Directory.External,
+      encoding: 'utf8',
+      recursive: true
+    });
+  } catch (e) {
+    console.error('Error guardando leidos:', e);
+  }
+}
+
+// Marca o desmarca un episodio como leido
+async function toggleLeido(tab, titulo) {
+  var leidos = await cargarLeidos(tab);
+  var idx = leidos.indexOf(titulo);
+  if (idx >= 0) {
+    leidos.splice(idx, 1);  // quitar
+  } else {
+    leidos.push(titulo);    // agregar
+  }
+  await guardarLeidos(tab, leidos);
+  return leidos.indexOf(titulo) >= 0;
+}
+
+// Filtro global por pestana: 'todos' | 'no_leidos' | 'leidos'
+var FILTROS = {};
+
+function getFiltro(tab) {
+  return FILTROS[tab] || 'todos';
+}
+
+function setFiltro(tab, valor) {
+  FILTROS[tab] = valor;
+}
