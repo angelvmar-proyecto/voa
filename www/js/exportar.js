@@ -77,11 +77,18 @@ async function exportarDescargas() {
           var archivo = r.files[j];
           totalArchivos++;
           try {
-            // Leer del origen
-            var contenido = await fs.readFile({
+            // Detectar si es texto o binario
+            var esTexto = archivo.name.endsWith('.txt');
+            
+            // Leer del origen (mismo encoding que al escribir)
+            var optsLectura = {
               path: origen + '/' + archivo.name,
               directory: Directory.External
-            });
+            };
+            if (esTexto) {
+              optsLectura.encoding = 'utf8';  // ← leer como texto plano
+            }
+            var contenido = await fs.readFile(optsLectura);
             
             // Escribir en destino
             var opts = {
@@ -89,7 +96,7 @@ async function exportarDescargas() {
               data: contenido.data,
               directory: Directory.Documents
             };
-            if (archivo.name.endsWith('.txt')) {
+            if (esTexto) {
               opts.encoding = 'utf8';
             }
             await fs.writeFile(opts);
