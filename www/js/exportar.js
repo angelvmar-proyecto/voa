@@ -1,35 +1,54 @@
 // =====================================================================
 // EXPORTAR: Copia los archivos descargados a Documents/MiInglesVOA/
+// Escanea la carpeta MiInglesVOA/ directamente, sin depender de JSONs
 // =====================================================================
 
 async function exportarDescargas() {
   var boton = document.getElementById('btn-exportar');
-  if (boton) {
-    boton.disabled = true;
-    boton.innerHTML = '<span class="spinner"></span> Exportando...';
+  // Buscar el botón por texto (por si hay varios)
+  if (!boton) {
+    var botones = document.querySelectorAll('button');
+    for (var i = 0; i < botones.length; i++) {
+      if (botones[i].innerHTML.indexOf('📤') >= 0) {
+        boton = botones[i];
+        break;
+      }
+    }
   }
   
-  var info = document.getElementById('exportar-info');
-  if (info) info.textContent = 'Iniciando exportación...';
+  if (boton) {
+    boton.disabled = true;
+    boton.innerHTML = '<span class="spinner"></span>';
+  }
   
   try {
     var fs = getFilesystem();
+    var baseOrigen = 'MiInglesVOA';
     
-    // 1) Leer el progreso de descargas para saber qué programas hay
-    var progreso = await leerJSONDocs('progreso_descargas.json');
-    if (!progreso || Object.keys(progreso).length === 0) {
-      throw new Error('No hay nada descargado para exportar');
+    // 1) Listar las pestañas dentro de MiInglesVOA/
+    var carpetas;
+    try {
+      carpetas = await fs.readdir({
+        path: baseOrigen,
+        directory: Directory.External
+      });
+    } catch (e) {
+      throw new Error('No hay nada descargado todavía');
     }
     
-    // 2) Identificar programas únicos
-    var programas = {};
-    for (var clave in progreso) {
-      var progId = clave.split('/')[0];
-      programas[progId] = true;
+    var programas = [];
+    for (var i = 0; i < carpetas.files.length; i++) {
+      var f = carpetas.files[i];
+      if (f.type === 'directory') {
+        programas.push(f.name);
+      }
     }
-    var progs = Object.keys(programas);
     
-    // 3) Crear carpeta destino en Documents
+    if (!programas.length) {
+      throw new Error('No hay carpetas de programas en MiInglesVOA/');
+    }
+    
+    // 2) Crear carpeta destino en Documents
     try {
       await fs.mkdir({
         path: 'MiInglesVOA',
@@ -38,13 +57,14 @@ async function exportarDescargas() {
       });
     } catch (e) {}
     
-    // 4) Copiar cada archivo
+    // 3) Contadores
     var copiados = 0;
     var errores = 0;
-    var totalArchivos = 0;
+    var total = 0;
     
-    for (var i = 0; i < progs.length; i++) {
-      var prog = progs[i];
+    // 4) Copiar cada carpeta
+    for (var p = 0; p < programas.length; p++) {
+      var prog = programas[p];
       
       // Copiar audios
       await copiarCarpeta(prog, 'audios');
@@ -54,14 +74,18 @@ async function exportarDescargas() {
     
     async function copiarCarpeta(prog, tipo) {
       try {
-        var origen = 'MiInglesVOA/' + prog + '/' + tipo;
+        var origen = baseOrigen + '/' + prog + '/' + tipo;
         var destino = 'MiInglesVOA/' + prog + '/' + tipo;
         
-        // Listar archivos en la carpeta origen
-        var r = await fs.readdir({
-          path: origen,
-          directory: Directory.External
-        });
+        var r;
+        try {
+          r = await fs.readdir({
+            path: origen,
+            directory: Directory.External
+          });
+        } catch (e) {
+          return;  // Sin esta carpeta, seguir
+        }
         
         // Crear carpeta destino
         try {
@@ -75,59 +99,50 @@ async function exportarDescargas() {
         // Copiar cada archivo
         for (var j = 0; j < r.files.length; j++) {
           var archivo = r.files[j];
-          totalArchivos++;
+          if (archivo.type === 'directory') continue;
+          
+          total++;
           try {
-            // Detectar si es texto o binario
             var esTexto = archivo.name.endsWith('.txt');
             
-            // Leer del origen (mismo encoding que al escribir)
             var optsLectura = {
               path: origen + '/' + archivo.name,
               directory: Directory.External
             };
-            if (esTexto) {
-              optsLectura.encoding = 'utf8';  // ← leer como texto plano
-            }
+            if (esTexto) optsLectura.encoding = 'utf8';
+            
             var contenido = await fs.readFile(optsLectura);
             
-            // Escribir en destino
             var opts = {
               path: destino + '/' + archivo.name,
               data: contenido.data,
               directory: Directory.Documents
             };
-            if (esTexto) {
-              opts.encoding = 'utf8';
-            }
-            await fs.writeFile(opts);
+            if (esTexto) opts.encoding = 'utf8';
             
+            await fs.writeFile(opts);
             copiados++;
-            if (info) {
-              info.textContent = 'Copiados: ' + copiados + '/' + totalArchivos + ' (' + prog + '/' + archivo.name.slice(0, 40) + ')';
-            }
           } catch (e) {
             errores++;
-            console.error('Error copiando ' + archivo.name + ': ' + e.message);
+            console.error('Error copiando ' + archivo.name + ':', e.message);
           }
         }
       } catch (e) {
-        console.log('Sin carpeta ' + prog + '/' + tipo + ': ' + e.message.slice(0, 60));
+        // Silencioso
       }
     }
     
     // 5) Reportar
-    if (info) {
-      info.textContent = '✅ Listo. Copiados: ' + copiados + ', Errores: ' + errores + '. Carpeta: /Documents/MiInglesVOA/';
-    }
-    alert('Exportación completa.\n\nCopiados: ' + copiados + '\nErrores: ' + errores + '\n\nUbicación:\nDocuments/MiInglesVOA/');
+    alert('Exportación completa.\n\nCopiados: ' + copiados + ' de ' + total +
+          '\nErrores: ' + errores +
+          '\n\nUbicación:\nDocuments/MiInglesVOA/');
     
   } catch (e) {
-    if (info) info.textContent = '❌ Error: ' + e.message;
     alert('Error al exportar: ' + e.message);
   }
   
   if (boton) {
     boton.disabled = false;
-    boton.innerHTML = '📤 Exportar a Documents';
+    boton.innerHTML = '📤';
   }
 }
