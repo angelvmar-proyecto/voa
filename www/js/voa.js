@@ -260,7 +260,10 @@ async function mostrarTextoVOA(tab, i, boton) {
 // =====================================================================
 
 async function borrarTextos(tab) {
-  if (!confirm('¿Borrar TODOS los textos de esta pestaña?')) return;
+  // Primera confirmacion
+  if (!confirm('⚠️ ATENCIÓN: Vas a borrar TODOS los textos de esta pestaña.\n\n¿Continuar?')) return;
+  // Segunda confirmacion
+  if (!confirm('🛑 ÚLTIMA ADVERTENCIA\n\nEsta acción borrará todos los textos guardados de esta pestaña.\n\n¿Estás completamente seguro?')) return;
   var items = await leerJSON('biblioteca_' + tab + '.json');
   if (!items || !items.length) { alert('No hay nada.'); return; }
   var n = 0;
