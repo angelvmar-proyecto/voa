@@ -74,12 +74,12 @@ async function descargarArchivoTexto(rutaRel, contenido) {
   partes.pop();
   var carpeta = partes.join('/');
   try {
-    await fs.mkdir({ path: carpeta, directory: Directory.ExternalStorage, recursive: true });
+    await fs.mkdir({ path: carpeta, directory: Directory.External, recursive: true });
   } catch (e) {}
   await fs.writeFile({
     path: ruta,
     data: contenido,
-    directory: Directory.ExternalStorage,
+    directory: Directory.External,
     encoding: 'utf8'
   });
 }
@@ -92,7 +92,7 @@ async function descargarArchivoBinario(url, rutaRel) {
   partes.pop();
   var carpeta = partes.join('/');
   try {
-    await fs.mkdir({ path: carpeta, directory: Directory.ExternalStorage, recursive: true });
+    await fs.mkdir({ path: carpeta, directory: Directory.External, recursive: true });
   } catch (e) {}
   
   // Descargar con CapacitorHttp como arraybuffer
@@ -100,7 +100,7 @@ async function descargarArchivoBinario(url, rutaRel) {
   await fs.writeFile({
     path: ruta,
     data: base64,
-    directory: Directory.ExternalStorage
+    directory: Directory.External
   });
 }
 
@@ -109,7 +109,7 @@ async function existeArchivoDocs(rutaRel) {
   try {
     await fs.stat({
       path: DESCARGAS.BASE + '/' + rutaRel,
-      directory: Directory.ExternalStorage,
+      directory: Directory.External,
       recursive: true
     });
     return true;
@@ -121,7 +121,7 @@ async function leerJSONDocs(rutaRel) {
   try {
     var r = await fs.readFile({
       path: DESCARGAS.BASE + '/' + rutaRel,
-      directory: Directory.ExternalStorage,
+      directory: Directory.External,
       encoding: 'utf8'
     });
     return JSON.parse(r.data);
