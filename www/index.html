@@ -24,6 +24,7 @@
   <div class="barra">
     <button onclick="actualizarBiblioteca('lecciones')">🔄 Cargar lista</button>
     <button class="sec" onclick="borrarTextos('lecciones')" title="Borrar textos">🧹</button>
+    <button class="sec" id="btn-exportar" onclick="exportarDescargas()" title="Exportar a Documents">📤</button>
   </div>
   <div id="estado-lecciones" style="display:none"></div>
   <div id="lista-lecciones"><div class="vacio">Toca "Cargar lista"</div></div>
@@ -36,6 +37,7 @@
   </div>
   <div id="estado-words" style="display:none"></div>
   <div id="lista-words"><div class="vacio">Toca "Actualizar lista"</div></div>
+  <div id="exportar-info" style="display:none; padding: 8px; font-size: 12px; color: #666; margin-top: 8px;"></div>
 </div>
 
 <div id="contenido-turismo" class="contenido">
@@ -55,12 +57,10 @@
 <script src="js/permisos.js"></script>
 <script src="js/archivos.js"></script>
 <script src="js/utils.js"></script>
-<script src="js/nativo.js"></script>
 <script src="js/voa.js"></script>
 <script src="js/turismo.js"></script>
 <script src="js/descargas.js"></script>
-<script src="js/verificar.js"></script>
-<script src="js/diagnostico3.js"></script>
+<script src="js/exportar.js"></script>
 <script src="js/app.js"></script>
 
 <div id="contenido-descargas" class="contenido">

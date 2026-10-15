@@ -83,3 +83,74 @@ function limpiarMarkdown(md) {
 
   return texto;
 }
+
+// =====================================================================
+// EXTRACCION UNICA DE TEXTO DE VOA
+// Devuelve { texto, mp3_128, mp3_64 } desde un HTML crudo
+// =====================================================================
+
+function extraerDeHtml(html) {
+  var resultado = { texto: '', mp3_128: null, mp3_64: null };
+  if (!html) return resultado;
+
+  // 1) Extraer MP3s del HTML crudo (antes de limpiar)
+  var mp3s = html.match(/https?:\/\/[^\s"'<>\\&]+\.mp3/g) || [];
+  for (var i = 0; i < mp3s.length; i++) {
+    var m = mp3s[i];
+    if (m.indexOf('_hq') >= 0 && !resultado.mp3_128) resultado.mp3_128 = m;
+    else if (m.indexOf('_hq') < 0 && !resultado.mp3_64) resultado.mp3_64 = m;
+  }
+
+  // 2) Extraer texto del .wsw
+  try {
+    var doc = new DOMParser().parseFromString(html, 'text/html');
+    var wsw = doc.querySelector('.wsw');
+    if (!wsw) return resultado;
+
+    // Obtener texto plano
+    var t = wsw.innerText || '';
+
+    // Limpiar linea por linea
+    var lineas = t.split('\n')
+      .map(function(l) { return l.trim(); })
+      .filter(function(l) {
+        if (!l || l.length < 3) return false;
+        if (!/[A-Za-z\u00c0-\u017f]/.test(l)) return false;
+
+        // --- FILTROS DE BASURA DE VOA ---
+        // Navegacion y compartir
+        if (/^(Embed|share|Share|Copy link|Facebook|Twitter|Telegram|WhatsApp|Email|Forum|Previous|Next|Menu|Search|Languages|Breaking News)$/i.test(l)) return false;
+        // "The code has been copied..."
+        if (/^The code has been copied/i.test(l)) return false;
+        if (/^The URL has been copied/i.test(l)) return false;
+        // Aviso de reproductor
+        if (/^No media source currently available$/i.test(l)) return false;
+        // Duraciones (0:00, 0:04:26)
+        if (/^\d{1,2}:\d{2}(:\d{2})?$/.test(l)) return false;
+        // "Direct link", "128 kbps | MP3", "64 kbps | MP3", "Pop-out player"
+        if (/^Direct link$/i.test(l)) return false;
+        if (/^\d+\s*kbps\s*\|\s*MP3$/i.test(l)) return false;
+        if (/^Pop-out player$/i.test(l)) return false;
+        // Genericos de VOA
+        if (/^(Audio \d+|Video|Audio)$/i.test(l)) return false;
+        // Fechas solas
+        if (/^(January|February|March|April|May|June|July|August|September|October|November|December)\s+\d{1,2},\s+\d{4}$/.test(l)) return false;
+        // "See all episodes", etc
+        if (/^See (all|TV|Radio)/i.test(l)) return false;
+        // "VOA - Voice of America English News"
+        if (/^VOA - Voice of America English News$/i.test(l)) return false;
+
+        return true;
+      });
+
+    resultado.texto = lineas.join('\n\n').replace(/\n{3,}/g, '\n\n').trim();
+
+    // Cortar desde "Words in This Story" si aparece al final para quedarse solo con el texto
+    // En realidad queremos mantenerlo, es util (vocabulario)
+
+  } catch (e) {
+    console.log('Error parseando HTML:', e.message);
+  }
+
+  return resultado;
+}

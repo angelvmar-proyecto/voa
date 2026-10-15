@@ -33,11 +33,12 @@ function dlog(msg) {
 }
 
 function slugify2(s) {
-  return String(s).toLowerCase()
-    .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
-    .replace(/[^a-z0-9]+/g, '_')
-    .replace(/^_+|_+$/g, '')
-    .slice(0, 70) || 'audio';
+  if (!s) return 'audio';
+  return String(s)
+    .replace(/[\/\\:*?"<>|]/g, '')   // quitar caracteres prohibidos en nombres de archivo
+    .replace(/\s+/g, ' ')
+    .trim()
+    .slice(0, 100) || 'audio';
 }
 
 function decodificarEntidades2(s) {
@@ -134,38 +135,6 @@ async function guardarJSONDocs(rutaRel, datos) {
 
 // =====================================================================
 // EXTRAER DATOS DE UNA PAGINA DE VOA
-// =====================================================================
-
-function extraerDeHtml(html) {
-  // Devuelve { texto, mp3_128, mp3_64 }
-  var resultado = { texto: '', mp3_128: null, mp3_64: null };
-  if (!html) return resultado;
-  
-  // 1) Extraer texto del .wsw con DOMParser
-  try {
-    var doc = new DOMParser().parseFromString(html, 'text/html');
-    var wsw = doc.querySelector('.wsw');
-    if (wsw) {
-      var t = wsw.innerText || '';
-      var lineas = t.split('\n').map(function(l) { return l.trim(); })
-        .filter(function(l) { return l.length > 3; });
-      resultado.texto = lineas.join('\n\n');
-    }
-  } catch (e) { dlog('Error parseando HTML: ' + e.message); }
-  
-  // 2) Extraer MP3
-  var mp3s = html.match(/https?:\/\/[^\s"'<>\\&]+\.mp3/g) || [];
-  for (var i = 0; i < mp3s.length; i++) {
-    var m = mp3s[i];
-    if (m.indexOf('_hq') >= 0 && !resultado.mp3_128) resultado.mp3_128 = m;
-    else if (m.indexOf('_hq') < 0 && !resultado.mp3_64) resultado.mp3_64 = m;
-  }
-  
-  return resultado;
-}
-
-// =====================================================================
-// PARSEAR FEEDS RSS
 // =====================================================================
 
 function parsearRSS(xml) {
@@ -294,7 +263,7 @@ async function obtenerProgramas() {
 async function descargarEpisodio(progId, episodio, num, total, progreso) {
   var titulo = episodio.titulo;
   var slug = slugify2(titulo);
-  var nombreBase = 'l' + String(num).padStart(4, '0') + '_' + slug;
+  var nombreBase = slug;  // solo el titulo, sin prefijo l0001_
   
   var rutaAudio = progId + '/audios/' + nombreBase + '.mp3';
   var rutaTexto = progId + '/textos/' + nombreBase + '.txt';
