@@ -592,3 +592,135 @@ async function preguntarMigracion() {
     }
   }
 }
+
+// =====================================================================
+// DIAGNOSTICO: Lista la estructura completa de ambas carpetas
+// =====================================================================
+
+async function diagnosticarEstructura() {
+  var fs = getFilesystem();
+  
+  dlogClear();
+  dlog('═══════════════════════════════');
+  dlog('DIAGNÓSTICO DE ESTRUCTURA');
+  dlog('═══════════════════════════════');
+  
+  // 1) Listar Android/data
+  dlog('');
+  dlog('📍 ANDROID/DATA (Directory.External)');
+  dlog('───────────────────────────────');
+  await listarRecursivo('', 0, 3);
+  
+  // 2) Listar Documents
+  dlog('');
+  dlog('📍 DOCUMENTS (Directory.Documents)');
+  dlog('───────────────────────────────');
+  await listarRecursivoDocs('MiInglesVOA', 0, 3);
+  
+  alert('Diagnóstico completo. Revisa el panel de log.');
+  
+  async function listarRecursivo(ruta, nivel, maxNivel) {
+    if (nivel > maxNivel) return;
+    var indent = '  '.repeat(nivel);
+    try {
+      var r = await fs.readdir({ path: ruta, directory: Directory.External });
+      for (var i = 0; i < r.files.length; i++) {
+        var f = r.files[i];
+        if (f.type === 'directory') {
+          dlog(indent + '📁 ' + f.name + '/');
+          await listarRecursivo(ruta ? ruta + '/' + f.name : f.name, nivel + 1, maxNivel);
+        } else {
+          var size = f.size ? ' (' + Math.round(f.size / 1024) + ' KB)' : '';
+          dlog(indent + '📄 ' + f.name + size);
+        }
+      }
+    } catch (e) {
+      dlog(indent + '❌ Error: ' + e.message.slice(0, 60));
+    }
+  }
+  
+  async function listarRecursivoDocs(ruta, nivel, maxNivel) {
+    if (nivel > maxNivel) return;
+    var indent = '  '.repeat(nivel);
+    try {
+      var r = await fs.readdir({ path: ruta, directory: Directory.Documents });
+      for (var i = 0; i < r.files.length; i++) {
+        var f = r.files[i];
+        if (f.type === 'directory') {
+          dlog(indent + '📁 ' + f.name + '/');
+          await listarRecursivoDocs(ruta + '/' + f.name, nivel + 1, maxNivel);
+        } else {
+          dlog(indent + '📄 ' + f.name);
+        }
+      }
+    } catch (e) {
+      dlog(indent + '❌ Error: ' + e.message.slice(0, 60));
+    }
+  }
+}
+
+// =====================================================================
+// DIAGNOSTICO: Lista la estructura completa de ambas carpetas
+// =====================================================================
+
+async function diagnosticarEstructura() {
+  var fs = getFilesystem();
+  
+  dlogClear();
+  dlog('═══════════════════════════════');
+  dlog('DIAGNÓSTICO DE ESTRUCTURA');
+  dlog('═══════════════════════════════');
+  
+  // 1) Listar Android/data
+  dlog('');
+  dlog('📍 ANDROID/DATA (Directory.External)');
+  dlog('───────────────────────────────');
+  await listarRecursivo('', 0, 3);
+  
+  // 2) Listar Documents
+  dlog('');
+  dlog('📍 DOCUMENTS (Directory.Documents)');
+  dlog('───────────────────────────────');
+  await listarRecursivoDocs('MiInglesVOA', 0, 3);
+  
+  alert('Diagnóstico completo. Revisa el panel de log.');
+  
+  async function listarRecursivo(ruta, nivel, maxNivel) {
+    if (nivel > maxNivel) return;
+    var indent = '  '.repeat(nivel);
+    try {
+      var r = await fs.readdir({ path: ruta, directory: Directory.External });
+      for (var i = 0; i < r.files.length; i++) {
+        var f = r.files[i];
+        if (f.type === 'directory') {
+          dlog(indent + '📁 ' + f.name + '/');
+          await listarRecursivo(ruta ? ruta + '/' + f.name : f.name, nivel + 1, maxNivel);
+        } else {
+          var size = f.size ? ' (' + Math.round(f.size / 1024) + ' KB)' : '';
+          dlog(indent + '📄 ' + f.name + size);
+        }
+      }
+    } catch (e) {
+      dlog(indent + '❌ Error: ' + e.message.slice(0, 60));
+    }
+  }
+  
+  async function listarRecursivoDocs(ruta, nivel, maxNivel) {
+    if (nivel > maxNivel) return;
+    var indent = '  '.repeat(nivel);
+    try {
+      var r = await fs.readdir({ path: ruta, directory: Directory.Documents });
+      for (var i = 0; i < r.files.length; i++) {
+        var f = r.files[i];
+        if (f.type === 'directory') {
+          dlog(indent + '📁 ' + f.name + '/');
+          await listarRecursivoDocs(ruta + '/' + f.name, nivel + 1, maxNivel);
+        } else {
+          dlog(indent + '📄 ' + f.name);
+        }
+      }
+    } catch (e) {
+      dlog(indent + '❌ Error: ' + e.message.slice(0, 60));
+    }
+  }
+}
