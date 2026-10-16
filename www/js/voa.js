@@ -147,7 +147,7 @@ async function actualizarBiblioteca(tab) {
       items = parsearRSS(xml);
       if (!items.length) throw new Error('El feed no tiene episodios');
     }
-    await guardarJSON('biblioteca_' + tab + '.json', items);
+    await guardarJSON('MiInglesVOA/biblioteca_' + tab + '.json', items);
     setEstado(tab, '✅ ' + items.length + ' elementos cargados', 'ok');
     await cargarVista(tab);
   } catch (e) {
@@ -162,7 +162,7 @@ async function actualizarBiblioteca(tab) {
 // =====================================================================
 
 async function descargarVOA(tab, i, boton) {
-  var items = await leerJSON('biblioteca_' + tab + '.json');
+  var items = await leerJSON('MiInglesVOA/biblioteca_' + tab + '.json');
   var it = items[i];
   var rutas = rutasPara(tab, it.titulo);
   boton.disabled = true;
@@ -203,7 +203,7 @@ async function descargarVOA(tab, i, boton) {
 async function reproducirVOA(tab, i, boton) {
   var cont = document.getElementById('rep_' + tab + '_' + i);
   if (cont.innerHTML) { cont.innerHTML = ''; boton.innerHTML = '▶️ Audio'; return; }
-  var items = await leerJSON('biblioteca_' + tab + '.json');
+  var items = await leerJSON('MiInglesVOA/biblioteca_' + tab + '.json');
   var it = items[i];
   var rutas = rutasPara(tab, it.titulo);
   boton.disabled = true;
@@ -233,7 +233,7 @@ async function reproducirVOA(tab, i, boton) {
 async function mostrarTextoVOA(tab, i, boton) {
   var cont = document.getElementById('txt_' + tab + '_' + i);
   if (cont.innerHTML) { cont.innerHTML = ''; return; }
-  var items = await leerJSON('biblioteca_' + tab + '.json');
+  var items = await leerJSON('MiInglesVOA/biblioteca_' + tab + '.json');
   var it = items[i];
   var rutas = rutasPara(tab, it.titulo);
   boton.disabled = true;
@@ -264,7 +264,7 @@ async function borrarTextos(tab) {
   if (!confirm('⚠️ ATENCIÓN: Vas a borrar TODOS los textos de esta pestaña.\n\n¿Continuar?')) return;
   // Segunda confirmacion
   if (!confirm('🛑 ÚLTIMA ADVERTENCIA\n\nEsta acción borrará todos los textos guardados de esta pestaña.\n\n¿Estás completamente seguro?')) return;
-  var items = await leerJSON('biblioteca_' + tab + '.json');
+  var items = await leerJSON('MiInglesVOA/biblioteca_' + tab + '.json');
   if (!items || !items.length) { alert('No hay nada.'); return; }
   var n = 0;
   for (var i = 0; i < items.length; i++) {
@@ -288,7 +288,7 @@ async function cargarVista(tab) {
   var lista = document.getElementById('lista-' + tab);
   if (!lista) return;
   
-  var items = await leerJSON('biblioteca_' + tab + '.json');
+  var items = await leerJSON('MiInglesVOA/biblioteca_' + tab + '.json');
   if (!items || !items.length) {
     lista.innerHTML = '<div class="vacio">Sin elementos. Toca el botón de arriba.</div>';
     return;

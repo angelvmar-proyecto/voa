@@ -353,3 +353,242 @@ async function importarTodo() {
     alert('Error al importar: ' + e.message);
   }
 }
+
+// =====================================================================
+// MIGRAR: Mueve archivos de la estructura vieja a MiInglesVOA/
+// Estructura vieja:
+//   audios/<tab>/archivo.mp3
+//   textos/<tab>/archivo.txt
+//   biblioteca_<tab>.json
+//   leidos_<tab>.json
+// Estructura nueva:
+//   MiInglesVOA/audios/<tab>/archivo.mp3
+//   MiInglesVOA/textos/<tab>/archivo.txt
+//   MiInglesVOA/biblioteca_<tab>.json
+//   MiInglesVOA/leidos_<tab>.json
+// =====================================================================
+
+async function migrarArchivosViejos() {
+  var fs = getFilesystem();
+  var base = 'MiInglesVOA';
+  
+  dlogClear();
+  dlog('═══════════════════════════════');
+  dlog('INICIANDO MIGRACIÓN');
+  dlog('═══════════════════════════════');
+  
+  // 1) Asegurar carpeta destino
+  dlog('Preparando carpeta destino: ' + base + '/');
+  try {
+    await fs.mkdir({ path: base, directory: Directory.External, recursive: true });
+    await fs.mkdir({ path: base + '/audios', directory: Directory.External, recursive: true });
+    await fs.mkdir({ path: base + '/textos', directory: Directory.External, recursive: true });
+    dlog('✅ Carpeta destino lista');
+  } catch (e) {
+    dlog('⚠️ Error creando destino: ' + e.message);
+  }
+  
+  var movidos = 0;
+  var errores = 0;
+  var jsonsMovidos = 0;
+  
+  // 2) Migrar carpetas audios/ y textos/
+  await migrarTipo('audios');
+  await migrarTipo('textos');
+  
+  async function migrarTipo(tipo) {
+    // Listar subcarpetas dentro de 'audios/' o 'textos/' (viejas)
+    var subcarpetas;
+    try {
+      subcarpetas = await fs.readdir({
+        path: tipo,
+        directory: Directory.External
+      });
+    } catch (e) {
+      dlog('  (' + tipo + ': no existe en estructura vieja)');
+      return;
+    }
+    
+    dlog('');
+    dlog('📁 Migrando ' + tipo + '/');
+    
+    for (var i = 0; i < subcarpetas.files.length; i++) {
+      var sub = subcarpetas.files[i];
+      if (sub.type !== 'directory') continue;
+      
+      var prog = sub.name;
+      var origen = tipo + '/' + prog;
+      var destino = base + '/' + tipo + '/' + prog;
+      
+      // Crear carpeta destino del programa
+      try {
+        await fs.mkdir({ path: destino, directory: Directory.External, recursive: true });
+      } catch (e) {}
+      
+      // Listar archivos dentro
+      var archivos;
+      try {
+        archivos = await fs.readdir({ path: origen, directory: Directory.External });
+      } catch (e) {
+        continue;
+      }
+      
+      var movidosAqui = 0;
+      
+      for (var j = 0; j < archivos.files.length; j++) {
+        var arch = archivos.files[j];
+        if (arch.type === 'directory') continue;
+        
+        try {
+          var esTexto = arch.name.endsWith('.txt');
+          
+          // Leer del origen
+          var optsLectura = {
+            path: origen + '/' + arch.name,
+            directory: Directory.External
+          };
+          if (esTexto) optsLectura.encoding = 'utf8';
+          
+          var contenido = await fs.readFile(optsLectura);
+          
+          // Escribir en destino
+          var optsEscritura = {
+            path: destino + '/' + arch.name,
+            data: contenido.data,
+            directory: Directory.External
+          };
+          if (esTexto) optsEscritura.encoding = 'utf8';
+          
+          await fs.writeFile(optsEscritura);
+          
+          // Borrar original
+          try {
+            await fs.deleteFile({
+              path: origen + '/' + arch.name,
+              directory: Directory.External
+            });
+          } catch (e) {}
+          
+          movidosAqui++;
+          movidos++;
+        } catch (e) {
+          errores++;
+          dlog('    ⚠️ Error con ' + arch.name + ': ' + e.message.slice(0, 40));
+        }
+      }
+      
+      if (movidosAqui > 0) {
+        dlog('  ' + prog + ': ' + movidosAqui + ' archivos movidos');
+      }
+      
+      // Intentar borrar carpeta vieja
+      try {
+        await fs.rmdir({ path: origen, directory: Directory.External });
+      } catch (e) {}
+    }
+    
+    // Intentar borrar carpeta contenedora si quedó vacía
+    try {
+      await fs.rmdir({ path: tipo, directory: Directory.External });
+      dlog('  ✅ Carpeta vieja ' + tipo + '/ eliminada');
+    } catch (e) {}
+  }
+  
+  // 3) Migrar JSONs (biblioteca_*.json y leidos_*.json)
+  dlog('');
+  dlog('📁 Migrando archivos JSON');
+  
+  try {
+    var raiz = await fs.readdir({ path: '', directory: Directory.External });
+    for (var k = 0; k < raiz.files.length; k++) {
+      var f = raiz.files[k];
+      if (f.type === 'directory') continue;
+      if (!f.name.endsWith('.json')) continue;
+      if (f.name === 'progreso_descargas.json') continue;
+      if (f.name === 'feeds_voa.json') continue;
+      
+      // Solo migrar biblioteca_*.json y leidos_*.json
+      if (f.name.indexOf('biblioteca_') === 0 || f.name.indexOf('leidos_') === 0) {
+        try {
+          var cont = await fs.readFile({
+            path: f.name,
+            directory: Directory.External,
+            encoding: 'utf8'
+          });
+          
+          await fs.writeFile({
+            path: base + '/' + f.name,
+            data: cont.data,
+            directory: Directory.External,
+            encoding: 'utf8'
+          });
+          
+          try {
+            await fs.deleteFile({ path: f.name, directory: Directory.External });
+          } catch (e) {}
+          
+          jsonsMovidos++;
+        } catch (e) {}
+      }
+    }
+    dlog('  ' + jsonsMovidos + ' archivos JSON migrados');
+  } catch (e) {
+    dlog('  ⚠️ No se pudieron migrar los JSONs');
+  }
+  
+  // 4) Reporte final
+  dlog('');
+  dlog('═══════════════════════════════');
+  dlog('✅ MIGRACIÓN COMPLETA');
+  dlog('═══════════════════════════════');
+  dlog('Archivos movidos: ' + movidos);
+  dlog('JSONs movidos: ' + jsonsMovidos);
+  dlog('Errores: ' + errores);
+  
+  alert('✅ Migración completa\n\nArchivos movidos: ' + movidos +
+        '\nJSONs movidos: ' + jsonsMovidos +
+        '\nErrores: ' + errores);
+}
+
+// =====================================================================
+// DETECTAR: ¿Hay archivos viejos pendientes de migrar?
+// =====================================================================
+
+async function hayArchivosViejos() {
+  var fs = getFilesystem();
+  
+  // Verificar si existen las carpetas viejas 'audios/' o 'textos/' en la raíz
+  try {
+    var r = await fs.readdir({ path: 'audios', directory: Directory.External });
+    if (r.files && r.files.length > 0) return true;
+  } catch (e) {}
+  
+  try {
+    var r2 = await fs.readdir({ path: 'textos', directory: Directory.External });
+    if (r2.files && r2.files.length > 0) return true;
+  } catch (e) {}
+  
+  return false;
+}
+
+async function preguntarMigracion() {
+  var hay = await hayArchivosViejos();
+  if (!hay) return;
+  
+  var respuesta = confirm(
+    '🔄 Detecté archivos de una versión anterior en la estructura vieja.\n\n' +
+    '¿Quieres migrarlos a la nueva ubicación MiInglesVOA/ ?\n\n' +
+    'Esto moverá tus audios y textos descargados para que sigan apareciendo en la app.'
+  );
+  
+  if (respuesta) {
+    await migrarArchivosViejos();
+    // Recargar todas las vistas
+    var tabs = ['lecciones', 'words', 'science', 'grammar', 'teacher',
+                'american_stories', 'us_history', 'presidents', 'arts',
+                'health', 'as_it_is'];
+    for (var t = 0; t < tabs.length; t++) {
+      try { await cargarVista(tabs[t]); } catch (e) {}
+    }
+  }
+}

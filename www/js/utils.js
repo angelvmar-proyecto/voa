@@ -169,7 +169,7 @@ function tieneSlug(url) {
 async function cargarLeidos(tab) {
   try {
     var r = await getFilesystem().readFile({
-      path: 'leidos_' + tab + '.json',
+      path: 'MiInglesVOA/leidos_' + tab + '.json',
       directory: Directory.External,
       encoding: 'utf8',
       recursive: true
@@ -184,7 +184,7 @@ async function cargarLeidos(tab) {
 async function guardarLeidos(tab, leidos) {
   try {
     await getFilesystem().writeFile({
-      path: 'leidos_' + tab + '.json',
+      path: 'MiInglesVOA/leidos_' + tab + '.json',
       data: JSON.stringify(leidos),
       directory: Directory.External,
       encoding: 'utf8',

@@ -35,7 +35,21 @@ async function pedirPermisosAlmacenamiento() {
 
 // Llamar al inicio
 document.addEventListener('DOMContentLoaded', function() {
-  setTimeout(pedirPermisosAlmacenamiento, 1000);
+  setTimeout(async function() {
+    // 1) Pedir permisos
+    await pedirPermisosAlmacenamiento();
+    
+    // 2) Esperar un poco y preguntar por migración (si hay archivos viejos)
+    setTimeout(async function() {
+      try {
+        if (typeof preguntarMigracion === 'function') {
+          await preguntarMigracion();
+        }
+      } catch (e) {
+        console.log('Error en migración:', e);
+      }
+    }, 1500);
+  }, 1000);
 });
 
 

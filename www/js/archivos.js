@@ -1,8 +1,8 @@
 // ⚠️⚠️⚠️ REEMPLAZA 'PEGA_AQUI_TU_NUEVA_KEY' CON TU API KEY DE JINA.AI ⚠️⚠️⚠️
 var JINA_API_KEY = 'jina_7106381c738c462b964f4288963870d1HKCWz9z8vrlWkBU6cT01jNV3jWc4';
 
-var CARPETA_AUDIOS = 'audios/';
-var CARPETA_TEXTOS = 'textos/';
+var CARPETA_AUDIOS = 'MiInglesVOA/audios/';
+var CARPETA_TEXTOS = 'MiInglesVOA/textos/';
 
 // Helpers que consultan plugins en tiempo de ejecucion
 function getFilesystem() {
