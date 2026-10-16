@@ -4,6 +4,9 @@
 // =====================================================================
 
 async function exportarDescargas() {
+  // Confirmacion previa (tambien hace que 'event' este disponible)
+  if (!confirm('¿Exportar todos los archivos descargados a Documents?\n\nSe copiarán de Android/data a Documents/MiInglesVOA/')) return;
+  
   // Buscar el botón que disparó la acción
   var boton = event && event.target ? event.target.closest('button') : null;
   if (boton) {
