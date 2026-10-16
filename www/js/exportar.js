@@ -1,21 +1,11 @@
 // =====================================================================
-// EXPORTAR: Copia los archivos descargados a Documents/MiInglesVOA/
-// Escanea la carpeta MiInglesVOA/ directamente, sin depender de JSONs
+// EXPORTAR: Copia archivos de Android/data -> Documents
+// Escanea dinámicamente todas las carpetas dentro de MiInglesVOA/
 // =====================================================================
 
 async function exportarDescargas() {
-  var boton = document.getElementById('btn-exportar');
-  // Buscar el botón por texto (por si hay varios)
-  if (!boton) {
-    var botones = document.querySelectorAll('button');
-    for (var i = 0; i < botones.length; i++) {
-      if (botones[i].innerHTML.indexOf('📤') >= 0) {
-        boton = botones[i];
-        break;
-      }
-    }
-  }
-  
+  // Buscar el botón que disparó la acción
+  var boton = event && event.target ? event.target.closest('button') : null;
   if (boton) {
     boton.disabled = true;
     boton.innerHTML = '<span class="spinner"></span>';
@@ -25,7 +15,7 @@ async function exportarDescargas() {
     var fs = getFilesystem();
     var baseOrigen = 'MiInglesVOA';
     
-    // 1) Listar las pestañas dentro de MiInglesVOA/
+    // 1) Listar carpetas dentro de MiInglesVOA/ en Android/data
     var carpetas;
     try {
       carpetas = await fs.readdir({
@@ -45,10 +35,10 @@ async function exportarDescargas() {
     }
     
     if (!programas.length) {
-      throw new Error('No hay carpetas de programas en MiInglesVOA/');
+      throw new Error('No hay carpetas de programas en Android/data');
     }
     
-    // 2) Crear carpeta destino en Documents
+    // 2) Asegurar carpeta destino en Documents
     try {
       await fs.mkdir({
         path: 'MiInglesVOA',
@@ -57,18 +47,14 @@ async function exportarDescargas() {
       });
     } catch (e) {}
     
-    // 3) Contadores
     var copiados = 0;
     var errores = 0;
     var total = 0;
     
-    // 4) Copiar cada carpeta
+    // 3) Copiar cada programa
     for (var p = 0; p < programas.length; p++) {
       var prog = programas[p];
-      
-      // Copiar audios
       await copiarCarpeta(prog, 'audios');
-      // Copiar textos
       await copiarCarpeta(prog, 'textos');
     }
     
@@ -79,24 +65,15 @@ async function exportarDescargas() {
         
         var r;
         try {
-          r = await fs.readdir({
-            path: origen,
-            directory: Directory.External
-          });
+          r = await fs.readdir({ path: origen, directory: Directory.External });
         } catch (e) {
-          return;  // Sin esta carpeta, seguir
+          return;
         }
         
-        // Crear carpeta destino
         try {
-          await fs.mkdir({
-            path: destino,
-            directory: Directory.Documents,
-            recursive: true
-          });
+          await fs.mkdir({ path: destino, directory: Directory.Documents, recursive: true });
         } catch (e) {}
         
-        // Copiar cada archivo
         for (var j = 0; j < r.files.length; j++) {
           var archivo = r.files[j];
           if (archivo.type === 'directory') continue;
@@ -124,21 +101,17 @@ async function exportarDescargas() {
             copiados++;
           } catch (e) {
             errores++;
-            console.error('Error copiando ' + archivo.name + ':', e.message);
           }
         }
-      } catch (e) {
-        // Silencioso
-      }
+      } catch (e) {}
     }
     
-    // 5) Reportar
-    alert('Exportación completa.\n\nCopiados: ' + copiados + ' de ' + total +
+    alert('📤 Exportación completa\n\nCopiados: ' + copiados + ' de ' + total +
           '\nErrores: ' + errores +
           '\n\nUbicación:\nDocuments/MiInglesVOA/');
     
   } catch (e) {
-    alert('Error al exportar: ' + e.message);
+    alert('❌ Error al exportar: ' + e.message);
   }
   
   if (boton) {
