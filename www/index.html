@@ -26,14 +26,13 @@
   <button id="tab-health" onclick="cambiarTab('health')">💚 Health & Lifestyle</button>
   <button id="tab-as_it_is" onclick="cambiarTab('as_it_is')">🌍 As It Is</button>
   <button id="tab-turismo" onclick="cambiarTab('turismo')">🌴 Turismo</button>
+  <button id="tab-datos" onclick="cambiarTab('datos')">⚙️ Datos</button>
 </div>
 
 <div id="contenido-lecciones" class="contenido activo">
   <div class="barra">
     <button onclick="actualizarBiblioteca('lecciones')">🔄 Cargar lista</button>
     <button class="sec" onclick="borrarTextos('lecciones')" title="Borrar textos">🧹</button>
-    <button class="sec" onclick="exportarDescargas()" title="Exportar a Documents">📤</button>
-    <button class="sec" onclick="importarDescargas('lecciones')" title="Importar desde Documents">📥</button>
   </div>
   <div id="estado-lecciones" style="display:none"></div>
   <div id="lista-lecciones"><div class="vacio">Toca "Cargar lista"</div></div>
@@ -43,8 +42,6 @@
   <div class="barra">
     <button onclick="actualizarBiblioteca('words')">🔄 Actualizar lista</button>
     <button class="sec" onclick="borrarTextos('words')" title="Borrar textos">🧹</button>
-    <button class="sec" onclick="exportarDescargas()" title="Exportar a Documents">📤</button>
-    <button class="sec" onclick="importarDescargas('words')" title="Importar desde Documents">📥</button>
   </div>
   <div id="estado-words" style="display:none"></div>
   <div id="lista-words"><div class="vacio">Toca "Actualizar lista"</div></div>
@@ -54,8 +51,6 @@
   <div class="barra">
     <button onclick="actualizarBiblioteca('science')">🔄 Actualizar lista</button>
     <button class="sec" onclick="borrarTextos('science')" title="Borrar textos">🧹</button>
-    <button class="sec" onclick="exportarDescargas()" title="Exportar a Documents">📤</button>
-    <button class="sec" onclick="importarDescargas('science')" title="Importar desde Documents">📥</button>
   </div>
   <div id="estado-science" style="display:none"></div>
   <div id="lista-science"><div class="vacio">Toca "Actualizar lista"</div></div>
@@ -65,8 +60,6 @@
   <div class="barra">
     <button onclick="actualizarBiblioteca('grammar')">🔄 Actualizar lista</button>
     <button class="sec" onclick="borrarTextos('grammar')" title="Borrar textos">🧹</button>
-    <button class="sec" onclick="exportarDescargas()" title="Exportar a Documents">📤</button>
-    <button class="sec" onclick="importarDescargas('grammar')" title="Importar desde Documents">📥</button>
   </div>
   <div id="estado-grammar" style="display:none"></div>
   <div id="lista-grammar"><div class="vacio">Toca "Actualizar lista"</div></div>
@@ -76,8 +69,6 @@
   <div class="barra">
     <button onclick="actualizarBiblioteca('teacher')">🔄 Actualizar lista</button>
     <button class="sec" onclick="borrarTextos('teacher')" title="Borrar textos">🧹</button>
-    <button class="sec" onclick="exportarDescargas()" title="Exportar a Documents">📤</button>
-    <button class="sec" onclick="importarDescargas('teacher')" title="Importar desde Documents">📥</button>
   </div>
   <div id="estado-teacher" style="display:none"></div>
   <div id="lista-teacher"><div class="vacio">Toca "Actualizar lista"</div></div>
@@ -87,8 +78,6 @@
   <div class="barra">
     <button onclick="actualizarBiblioteca('american_stories')">🔄 Actualizar lista</button>
     <button class="sec" onclick="borrarTextos('american_stories')" title="Borrar textos">🧹</button>
-    <button class="sec" onclick="exportarDescargas()" title="Exportar a Documents">📤</button>
-    <button class="sec" onclick="importarDescargas('american_stories')" title="Importar desde Documents">📥</button>
   </div>
   <div id="estado-american_stories" style="display:none"></div>
   <div id="lista-american_stories"><div class="vacio">Toca "Actualizar lista"</div></div>
@@ -98,8 +87,6 @@
   <div class="barra">
     <button onclick="actualizarBiblioteca('us_history')">🔄 Actualizar lista</button>
     <button class="sec" onclick="borrarTextos('us_history')" title="Borrar textos">🧹</button>
-    <button class="sec" onclick="exportarDescargas()" title="Exportar a Documents">📤</button>
-    <button class="sec" onclick="importarDescargas('us_history')" title="Importar desde Documents">📥</button>
   </div>
   <div id="estado-us_history" style="display:none"></div>
   <div id="lista-us_history"><div class="vacio">Toca "Actualizar lista"</div></div>
@@ -109,8 +96,6 @@
   <div class="barra">
     <button onclick="actualizarBiblioteca('presidents')">🔄 Actualizar lista</button>
     <button class="sec" onclick="borrarTextos('presidents')" title="Borrar textos">🧹</button>
-    <button class="sec" onclick="exportarDescargas()" title="Exportar a Documents">📤</button>
-    <button class="sec" onclick="importarDescargas('presidents')" title="Importar desde Documents">📥</button>
   </div>
   <div id="estado-presidents" style="display:none"></div>
   <div id="lista-presidents"><div class="vacio">Toca "Actualizar lista"</div></div>
@@ -120,8 +105,6 @@
   <div class="barra">
     <button onclick="actualizarBiblioteca('arts')">🔄 Actualizar lista</button>
     <button class="sec" onclick="borrarTextos('arts')" title="Borrar textos">🧹</button>
-    <button class="sec" onclick="exportarDescargas()" title="Exportar a Documents">📤</button>
-    <button class="sec" onclick="importarDescargas('arts')" title="Importar desde Documents">📥</button>
   </div>
   <div id="estado-arts" style="display:none"></div>
   <div id="lista-arts"><div class="vacio">Toca "Actualizar lista"</div></div>
@@ -131,8 +114,6 @@
   <div class="barra">
     <button onclick="actualizarBiblioteca('health')">🔄 Actualizar lista</button>
     <button class="sec" onclick="borrarTextos('health')" title="Borrar textos">🧹</button>
-    <button class="sec" onclick="exportarDescargas()" title="Exportar a Documents">📤</button>
-    <button class="sec" onclick="importarDescargas('health')" title="Importar desde Documents">📥</button>
   </div>
   <div id="estado-health" style="display:none"></div>
   <div id="lista-health"><div class="vacio">Toca "Actualizar lista"</div></div>
@@ -142,8 +123,6 @@
   <div class="barra">
     <button onclick="actualizarBiblioteca('as_it_is')">🔄 Actualizar lista</button>
     <button class="sec" onclick="borrarTextos('as_it_is')" title="Borrar textos">🧹</button>
-    <button class="sec" onclick="exportarDescargas()" title="Exportar a Documents">📤</button>
-    <button class="sec" onclick="importarDescargas('as_it_is')" title="Importar desde Documents">📥</button>
   </div>
   <div id="estado-as_it_is" style="display:none"></div>
   <div id="lista-as_it_is"><div class="vacio">Toca "Actualizar lista"</div></div>
@@ -170,7 +149,28 @@
 <script src="js/turismo.js"></script>
 <script src="js/exportar.js"></script>
 <script src="js/importar.js"></script>
+<script src="js/datos.js"></script>
 <script src="js/app.js"></script>
+
+
+<div id="contenido-datos" class="contenido">
+  <div class="barra">
+    <button onclick="exportarTodo()">📤 Exportar todo a Documents</button>
+  </div>
+  <div class="barra">
+    <button onclick="importarTodo()">📥 Importar todo desde Documents</button>
+  </div>
+
+  <div class="info">
+    <p><strong>📤 Exportar:</strong> copia tus audios y textos de la app a <code>Documents/MiInglesVOA/</code>.</p>
+    <p>Hazlo ANTES de desinstalar la app para no perder lo descargado.</p>
+    <p><strong>📥 Importar:</strong> recupera tus archivos desde <code>Documents/MiInglesVOA/</code> a la app.</p>
+    <p>Hazlo DESPUÉS de reinstalar la app.</p>
+  </div>
+
+  <h3>Log de actividad</h3>
+  <div id="datos-log" class="log-panel">(Sin actividad)</div>
+</div>
 
 </body>
 </html>

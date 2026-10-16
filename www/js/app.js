@@ -25,6 +25,10 @@ async function cambiarTab(tab) {
   // Cargar contenido según pestaña
   if (tab === 'turismo') {
     cargarTurismo();
+  } else if (tab === 'datos') {
+    // La pestaña Datos no necesita cargar nada, los botones
+    // llaman directamente a exportarTodo() / importarTodo()
+    dlogClear();
   } else if (TABS_VOA.indexOf(tab) >= 0) {
     cargarVista(tab);
   }
