@@ -44,7 +44,9 @@ jobs:
         run: |
           # Limpiar espacios y saltos de linea del secret
           CLEANED=$(echo "$KEYSTORE_BASE64" | tr -d ' \n\r')
-          echo "Tamanio despues de limpiar: ${#CLEANED} caracteres"
+          # Recortar a los primeros 3688 caracteres (tamanio exacto del keystore)
+          CLEANED=${CLEANED:0:3688}
+          echo "Tamanio despues de limpiar y recortar: ${#CLEANED} caracteres"
           
           # Decodificar
           echo "$CLEANED" | base64 -d > android/app/mi-clave.jks
