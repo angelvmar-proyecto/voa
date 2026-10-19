@@ -42,8 +42,16 @@ jobs:
         env:
           KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
         run: |
-          echo "$KEYSTORE_BASE64" | base64 -d > android/app/mi-clave.jks
+          # Limpiar espacios y saltos de linea del secret
+          CLEANED=$(echo "$KEYSTORE_BASE64" | tr -d ' \n\r')
+          echo "Tamanio despues de limpiar: ${#CLEANED} caracteres"
+          
+          # Decodificar
+          echo "$CLEANED" | base64 -d > android/app/mi-clave.jks
+          
+          # Verificar
           ls -la android/app/mi-clave.jks
+          file android/app/mi-clave.jks
 
       # ================= CONFIGURAR FIRMA =================
       - name: Configurar firma en build.gradle
