@@ -8,3 +8,8 @@ android/captures/
 *.log
 .DS_Store
 fix*.js
+mi-clave.jks
+mi-clave.jks.b64
+*.jks
+*.b64
+*.keystore
